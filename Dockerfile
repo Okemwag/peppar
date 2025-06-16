@@ -1,35 +1,21 @@
-# Use the official Elixir image as a base
-FROM elixir
+FROM elixir:1.18-alpine
 
-# Install inotify-tools and Node.js and npm
-RUN apt-get update && apt-get install -y inotify-tools nodejs npm
+#Install Dependencies
+RUN apk add --no-cache build-base git npm postgresql-client inotify-tools icu-data-full
 
-# Install Hex package manager and rebar
-RUN mix local.hex --force
-RUN mix local.rebar --force
-
-# Create app directory
-RUN mkdir /app
+#Install work Directory
 WORKDIR /app
 
-# Copy the mix.exs and mix.lock files
+#Install Hex and Rebar
+RUN mix local.hex --force && mix local.rebar --force
+
+# COPY project
 COPY mix.exs mix.lock ./
 
-# Install Elixir dependencies
+# Install Dependencies and compile
 RUN mix deps.get
-
-# Copy the rest of the application code
 COPY . .
+RUN mix compile
 
-# Install npm packages
-RUN npm install --prefix ./assets
-
-# Compile assets
-RUN npm run deploy --prefix ./assets
-RUN mix phx.digest
-
-# Expose port 4000 to the outside world
-EXPOSE 4000
-
-# Command to run the Phoenix server
+# Run Server
 CMD ["mix", "phx.server"]
