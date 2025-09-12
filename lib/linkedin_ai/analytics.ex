@@ -720,4 +720,41 @@ defmodule LinkedinAi.Analytics do
     )
     |> Repo.one()
   end
+
+  @doc """
+  Calculates subscription churn rate for a period.
+  """
+  def calculate_subscription_churn_rate({start_date, end_date}) do
+    alias LinkedinAi.Subscriptions.Subscription
+    
+    total_active = from(s in Subscription,
+      where: s.status in ["active", "trialing"],
+      select: count(s.id)
+    ) |> Repo.one()
+    
+    churned = from(s in Subscription,
+      where: s.status == "canceled" and
+             fragment("DATE(?)", s.canceled_at) >= ^start_date and
+             fragment("DATE(?)", s.canceled_at) <= ^end_date,
+      select: count(s.id)
+    ) |> Repo.one()
+    
+    if total_active > 0 do
+      Float.round(churned / total_active * 100, 1)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Counts API calls for a specific period.
+  """
+  def count_api_calls_for_period({start_date, end_date}) do
+    from(ur in UsageRecord,
+      where: fragment("DATE(?)", ur.inserted_at) >= ^start_date and
+             fragment("DATE(?)", ur.inserted_at) <= ^end_date,
+      select: sum(ur.usage_count)
+    )
+    |> Repo.one() || 0
+  end
 end

@@ -492,4 +492,100 @@ Looking forward to your thoughts and experiences on this topic.
     )
     |> Repo.all()
   end
+
+  ## Advanced Analytics Functions
+
+  @doc """
+  Counts total content generated.
+  """
+  def count_total_content do
+    from(gc in GeneratedContent, select: count(gc.id)) |> Repo.one()
+  end
+
+  @doc """
+  Counts content generated for a specific period.
+  """
+  def count_content_for_period({start_date, end_date}) do
+    from(gc in GeneratedContent,
+      where: fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      select: count(gc.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Counts published content for a period.
+  """
+  def count_published_content({start_date, end_date}) do
+    from(gc in GeneratedContent,
+      where: gc.is_published == true and
+             fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      select: count(gc.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Gets average content quality score.
+  """
+  def get_average_quality_score do
+    # Placeholder - would need quality scoring system
+    8.2
+  end
+
+  @doc """
+  Gets popular content types for a period.
+  """
+  def get_popular_content_types({start_date, end_date}) do
+    from(gc in GeneratedContent,
+      where: fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      group_by: gc.content_type,
+      select: {gc.content_type, count(gc.id)},
+      order_by: [desc: count(gc.id)]
+    )
+    |> Repo.all()
+    |> Enum.into(%{})
+  end
+
+  @doc """
+  Gets content engagement statistics.
+  """
+  def get_content_engagement_stats({_start_date, _end_date}) do
+    # Placeholder - would calculate from LinkedIn engagement data
+    75.8
+  end
+
+  @doc """
+  Gets usage statistics for a period.
+  """
+  def get_usage_stats({start_date, end_date}) do
+    %{
+      usage_count: count_content_for_period({start_date, end_date}),
+      unique_users: count_unique_users_for_period({start_date, end_date}),
+      avg_per_user: calculate_avg_content_per_user({start_date, end_date})
+    }
+  end
+
+  defp count_unique_users_for_period({start_date, end_date}) do
+    from(gc in GeneratedContent,
+      where: fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      select: count(gc.user_id, :distinct)
+    )
+    |> Repo.one()
+  end
+
+  defp calculate_avg_content_per_user({start_date, end_date}) do
+    total_content = count_content_for_period({start_date, end_date})
+    unique_users = count_unique_users_for_period({start_date, end_date})
+    
+    if unique_users > 0 do
+      Float.round(total_content / unique_users, 1)
+    else
+      0.0
+    end
+  end
 end

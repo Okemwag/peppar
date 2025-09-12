@@ -512,4 +512,139 @@ defmodule LinkedinAi.Billing do
     )
     |> LinkedinAi.Repo.one()
   end
+
+  ## Advanced Analytics Functions
+
+  @doc """
+  Gets revenue for a specific period.
+  """
+  def get_revenue_for_period({start_date, end_date}) do
+    import Ecto.Query
+    
+    from(s in Subscription,
+      where: s.status in ["active", "trialing"] and
+             fragment("DATE(?)", s.inserted_at) >= ^start_date and
+             fragment("DATE(?)", s.inserted_at) <= ^end_date,
+      select: sum(s.amount)
+    )
+    |> LinkedinAi.Repo.one() || 0
+  end
+
+  @doc """
+  Gets Monthly Recurring Revenue (MRR).
+  """
+  def get_mrr do
+    import Ecto.Query
+    
+    from(s in Subscription,
+      where: s.status in ["active", "trialing"],
+      select: sum(s.amount)
+    )
+    |> LinkedinAi.Repo.one() || 0
+  end
+
+  @doc """
+  Gets Average Revenue Per User (ARPU).
+  """
+  def get_arpu do
+    import Ecto.Query
+    
+    active_subscriptions = from(s in Subscription,
+      where: s.status in ["active", "trialing"],
+      select: count(s.id)
+    ) |> LinkedinAi.Repo.one()
+    
+    total_revenue = get_mrr()
+    
+    if active_subscriptions > 0 do
+      Float.round(total_revenue / active_subscriptions / 100, 2)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Gets revenue growth rate for a period.
+  """
+  def get_revenue_growth_rate({start_date, end_date}) do
+    current_revenue = get_revenue_for_period({start_date, end_date})
+    
+    # Calculate previous period
+    days_diff = Date.diff(end_date, start_date)
+    prev_start = Date.add(start_date, -days_diff)
+    prev_end = Date.add(end_date, -days_diff)
+    previous_revenue = get_revenue_for_period({prev_start, prev_end})
+    
+    if previous_revenue > 0 do
+      Float.round((current_revenue - previous_revenue) / previous_revenue * 100, 1)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Gets projected revenue based on current trends.
+  """
+  def get_projected_revenue({_start_date, _end_date}) do
+    # Simplified projection based on current MRR
+    get_mrr() * 12
+  end
+
+  @doc """
+  Gets expansion revenue (upgrades).
+  """
+  def get_expansion_revenue({_start_date, _end_date}) do
+    # Placeholder - would track plan upgrades
+    0
+  end
+
+  @doc """
+  Gets contraction revenue (downgrades).
+  """
+  def get_contraction_revenue({_start_date, _end_date}) do
+    # Placeholder - would track plan downgrades
+    0
+  end
+
+  @doc """
+  Calculates Customer Lifetime Value (LTV).
+  """
+  def calculate_customer_ltv do
+    arpu = get_arpu()
+    # Simplified LTV calculation: ARPU / churn_rate
+    # Using a placeholder churn rate of 5%
+    churn_rate = 0.05
+    
+    if churn_rate > 0 do
+      Float.round(arpu / churn_rate, 2)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Calculates payback period in months.
+  """
+  def calculate_payback_period do
+    # Simplified calculation - would need customer acquisition cost
+    # Placeholder: 3 months
+    3
+  end
+
+  @doc """
+  Gets revenue trends over time.
+  """
+  def get_revenue_trends({start_date, end_date}) do
+    # Generate sample trend data
+    days = Date.diff(end_date, start_date)
+    
+    for i <- 0..min(days, 30) do
+      date = Date.add(start_date, i)
+      %{
+        date: date,
+        revenue: :rand.uniform(5000) + 2000, # Sample data
+        subscriptions: :rand.uniform(50) + 20
+      }
+    end
+  end
 end

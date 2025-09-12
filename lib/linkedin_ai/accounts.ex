@@ -909,4 +909,16 @@ defmodule LinkedinAi.Accounts do
       offset: ^offset
     )
   end
+
+  @doc """
+  Counts new users for a specific period.
+  """
+  def count_new_users_for_period({start_date, end_date}) do
+    from(u in User,
+      where: fragment("DATE(?)", u.inserted_at) >= ^start_date and
+             fragment("DATE(?)", u.inserted_at) <= ^end_date,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
 end
