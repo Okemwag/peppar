@@ -157,8 +157,8 @@ defmodule LinkedinAi.Subscriptions do
   """
   def record_usage(%User{} = user, feature_type, usage_count \\ 1) do
     now = DateTime.utc_now()
-    period_start = DateTime.beginning_of_month(now)
-    period_end = DateTime.end_of_month(now)
+    period_start = Timex.beginning_of_month(now)
+    period_end = Timex.end_of_month(now)
 
     case get_usage_record(user.id, feature_type, period_start) do
       nil ->
@@ -205,7 +205,7 @@ defmodule LinkedinAi.Subscriptions do
   """
   def get_current_usage(%User{} = user, feature_type) do
     now = DateTime.utc_now()
-    period_start = DateTime.beginning_of_month(now)
+    period_start = Timex.beginning_of_month(now)
     
     case get_usage_record(user.id, feature_type, period_start) do
       nil -> 0
@@ -349,7 +349,7 @@ defmodule LinkedinAi.Subscriptions do
   """
   def get_feature_usage_stats(feature_type) do
     now = DateTime.utc_now()
-    period_start = DateTime.beginning_of_month(now)
+    period_start = Timex.beginning_of_month(now)
     
     query = from(ur in UsageRecord,
       where: ur.feature_type == ^feature_type and ur.period_start == ^period_start,

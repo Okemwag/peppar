@@ -355,7 +355,7 @@ defmodule LinkedinAi.ProfileOptimization do
     min(100, score)
   end
 
-  defp generate_headline_suggestions(headline) do
+  defp generate_headline_suggestions(_headline) do
     [
       %{
         "type" => "improvement",

@@ -17,6 +17,11 @@ defmodule LinkedinAiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :webhook do
+    plug LinkedinAiWeb.Plugs.RawBody
+    plug :accepts, ["json"]
+  end
+
   scope "/", LinkedinAiWeb do
     pipe_through :browser
 
@@ -29,6 +34,13 @@ defmodule LinkedinAiWeb.Router do
     pipe_through :api
     
     get "/health", HealthController, :check
+  end
+
+  # Webhook routes
+  scope "/webhooks", LinkedinAiWeb do
+    pipe_through :webhook
+    
+    post "/stripe", WebhookController, :stripe
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
