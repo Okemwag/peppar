@@ -1,58 +1,141 @@
 <!DOCTYPE html>
-<html lang="en" class="[scrollbar-gutter:stable]">
+<html lang="en" class="h-full bg-gray-50">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="Romino" suffix=" · Trading Bot">
+    <.live_title default="LinkedIn AI" suffix=" · AI-Powered LinkedIn Optimization">
       {assigns[:page_title]}
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
     </script>
   </head>
-  <body class="bg-white">
-    <ul class="relative z-10 flex items-center gap-4 px-4 sm:px-6 lg:px-8 justify-end">
-      <%= if @current_user do %>
-        <li class="text-[0.8125rem] leading-6 text-zinc-900">
-          {@current_user.email}
-        </li>
-        <li>
-          <.link
-            href={~p"/users/settings"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
-          >
-            Settings
-          </.link>
-        </li>
-        <li>
-          <.link
-            href={~p"/users/log_out"}
-            method="delete"
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
-          >
-            Log out
-          </.link>
-        </li>
-      <% else %>
-        <%!-- <li>
-          <.link
-            href={~p"/users/register"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
-          >
-            Register
-          </.link>
-        </li>
-        <li>
-          <.link
-            href={~p"/users/log_in"}
-            class="text-[0.8125rem] leading-6 text-zinc-900 font-semibold hover:text-zinc-700"
-          >
-            Log in
-          </.link>
-        </li> --%>
-      <% end %>
-    </ul>
-    {@inner_content}
+  <body class="h-full">
+    <%= if @current_user do %>
+      <!-- Authenticated Layout with Sidebar -->
+      <div class="min-h-full">
+        <!-- Mobile sidebar -->
+        <div class="lg:hidden">
+          <div class="fixed inset-0 z-50 flex" id="mobile-sidebar" style="display: none;">
+            <!-- Sidebar overlay -->
+            <div class="fixed inset-0 bg-gray-900/80" id="sidebar-overlay"></div>
+            
+<!-- Sidebar -->
+            <div class="relative flex w-full max-w-xs flex-1 flex-col bg-white">
+              <div class="absolute top-0 right-0 -mr-12 pt-2">
+                <button
+                  type="button"
+                  class="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+                  id="close-sidebar"
+                >
+                  <span class="sr-only">Close sidebar</span>
+                  <svg
+                    class="h-6 w-6 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke-width="1.5"
+                    stroke="currentColor"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <.sidebar_content current_user={@current_user} current_path={@conn.request_path} />
+            </div>
+          </div>
+        </div>
+        
+<!-- Desktop sidebar -->
+        <div class="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+          <div class="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4 shadow-xl">
+            <.sidebar_content current_user={@current_user} current_path={@conn.request_path} />
+          </div>
+        </div>
+        
+<!-- Main content -->
+        <div class="lg:pl-72">
+          <!-- Top navigation -->
+          <div class="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+            <!-- Mobile menu button -->
+            <button type="button" class="-m-2.5 p-2.5 text-gray-700 lg:hidden" id="open-sidebar">
+              <span class="sr-only">Open sidebar</span>
+              <svg
+                class="h-6 w-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
+                />
+              </svg>
+            </button>
+            
+<!-- Separator -->
+            <div class="h-6 w-px bg-gray-200 lg:hidden"></div>
+
+            <div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+              <!-- Breadcrumbs -->
+              <div class="flex items-center">
+                <.breadcrumbs current_path={@conn.request_path} />
+              </div>
+
+              <div class="flex items-center gap-x-4 lg:gap-x-6 ml-auto">
+                <!-- Subscription status -->
+                <.subscription_indicator current_user={@current_user} />
+                
+<!-- Profile dropdown -->
+                <.profile_dropdown current_user={@current_user} />
+              </div>
+            </div>
+          </div>
+          
+<!-- Page content -->
+          <main class="py-10">
+            <div class="px-4 sm:px-6 lg:px-8">
+              {@inner_content}
+            </div>
+          </main>
+        </div>
+      </div>
+    <% else %>
+      <!-- Unauthenticated Layout -->
+      <div class="min-h-full">
+        {@inner_content}
+      </div>
+    <% end %>
+    
+<!-- Mobile sidebar JavaScript -->
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const openSidebar = document.getElementById('open-sidebar');
+        const closeSidebar = document.getElementById('close-sidebar');
+        const mobileSidebar = document.getElementById('mobile-sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        if (openSidebar && mobileSidebar) {
+          openSidebar.addEventListener('click', function() {
+            mobileSidebar.style.display = 'flex';
+          });
+        }
+
+        if (closeSidebar && mobileSidebar) {
+          closeSidebar.addEventListener('click', function() {
+            mobileSidebar.style.display = 'none';
+          });
+        }
+
+        if (sidebarOverlay && mobileSidebar) {
+          sidebarOverlay.addEventListener('click', function() {
+            mobileSidebar.style.display = 'none';
+          });
+        }
+      });
+    </script>
   </body>
 </html>

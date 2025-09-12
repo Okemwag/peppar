@@ -253,18 +253,17 @@ defmodule LinkedinAi.AI.OpenAIClient do
 
   """
   def validate_messages(messages) when is_list(messages) do
-    valid_roles = ["system", "user", "assistant"]
-
     Enum.reduce_while(messages, :ok, fn message, _acc ->
       case message do
-        %{role: role, content: content} when role in valid_roles and is_binary(content) ->
+        %{role: role, content: content}
+        when role in ["system", "user", "assistant"] and is_binary(content) ->
           if String.trim(content) == "" do
             {:halt, {:error, :empty_content}}
           else
             {:cont, :ok}
           end
 
-        %{role: role} when role not in valid_roles ->
+        %{role: role} when role not in ["system", "user", "assistant"] ->
           {:halt, {:error, :invalid_role}}
 
         %{content: content} when not is_binary(content) ->
