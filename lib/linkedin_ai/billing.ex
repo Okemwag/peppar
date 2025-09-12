@@ -429,4 +429,87 @@ defmodule LinkedinAi.Billing do
   def get_current_subscription(%User{} = user) do
     Subscriptions.get_subscription_by_user_id(user.id)
   end
+
+  ## Admin Dashboard Functions
+
+  @doc """
+  Gets monthly revenue for admin dashboard.
+  """
+  def get_monthly_revenue do
+    # This would typically come from Stripe or your subscription records
+    # For now, return a calculated value based on active subscriptions
+    basic_count = count_subscriptions_by_plan("basic")
+    pro_count = count_subscriptions_by_plan("pro")
+    
+    (basic_count * 2500) + (pro_count * 4500) # amounts in cents
+  end
+
+  @doc """
+  Gets total revenue for admin dashboard.
+  """
+  def get_total_revenue do
+    # This would typically be stored or calculated from payment history
+    # Placeholder implementation
+    get_monthly_revenue() * 12
+  end
+
+  @doc """
+  Counts active subscriptions.
+  """
+  def count_active_subscriptions do
+    import Ecto.Query
+    
+    from(s in Subscription,
+      where: s.status in ["active", "trialing"],
+      select: count(s.id)
+    )
+    |> LinkedinAi.Repo.one()
+  end
+
+  @doc """
+  Calculates conversion rate (trial to paid).
+  """
+  def calculate_conversion_rate do
+    import Ecto.Query
+    
+    total_trials = from(s in Subscription,
+      where: s.status == "trialing" or s.previous_status == "trialing",
+      select: count(s.id)
+    ) |> LinkedinAi.Repo.one()
+    
+    converted_trials = from(s in Subscription,
+      where: s.status == "active" and s.previous_status == "trialing",
+      select: count(s.id)
+    ) |> LinkedinAi.Repo.one()
+    
+    if total_trials > 0 do
+      Float.round(converted_trials / total_trials * 100, 1)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Lists recent subscriptions.
+  """
+  def list_recent_subscriptions(limit \\ 10) do
+    import Ecto.Query
+    
+    from(s in Subscription,
+      order_by: [desc: s.inserted_at],
+      limit: ^limit,
+      preload: [:user]
+    )
+    |> LinkedinAi.Repo.all()
+  end
+
+  defp count_subscriptions_by_plan(plan_type) do
+    import Ecto.Query
+    
+    from(s in Subscription,
+      where: s.plan_type == ^plan_type and s.status in ["active", "trialing"],
+      select: count(s.id)
+    )
+    |> LinkedinAi.Repo.one()
+  end
 end

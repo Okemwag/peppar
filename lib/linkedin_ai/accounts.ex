@@ -607,6 +607,45 @@ defmodule LinkedinAi.Accounts do
   ## Authorization Helpers
 
   @doc """
+  Checks if a user has admin role.
+
+  ## Examples
+
+      iex> admin?(user)
+      true
+
+  """
+  def admin?(%User{role: "admin"}), do: true
+  def admin?(_), do: false
+
+  @doc """
+  Checks if a user can access admin features.
+
+  ## Examples
+
+      iex> can_access_admin?(user)
+      true
+
+  """
+  def can_access_admin?(%User{} = user) do
+    admin?(user) && User.active?(user)
+  end
+
+  @doc """
+  Gets all admin users.
+
+  ## Examples
+
+      iex> list_admin_users()
+      [%User{}, ...]
+
+  """
+  def list_admin_users do
+    from(u in User, where: u.role == "admin" and u.account_status == "active")
+    |> Repo.all()
+  end
+
+  @doc """
   Checks if a user can perform an action.
 
   ## Examples
@@ -721,5 +760,153 @@ defmodule LinkedinAi.Accounts do
   """
   def change_user_onboarding(%User{} = user, attrs \\ %{}) do
     User.onboarding_changeset(user, attrs)
+  end
+
+  ## Admin Dashboard Functions
+
+  @doc """
+  Counts total number of users.
+  """
+  def count_users do
+    from(u in User, select: count(u.id)) |> Repo.one()
+  end
+
+  @doc """
+  Counts active users today (users who logged in today).
+  """
+  def count_active_users_today do
+    today = Date.utc_today()
+    
+    from(u in User,
+      where: fragment("DATE(?)", u.last_login_at) == ^today,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Counts new users registered this week.
+  """
+  def count_new_users_this_week do
+    week_ago = Date.add(Date.utc_today(), -7)
+    
+    from(u in User,
+      where: fragment("DATE(?)", u.inserted_at) >= ^week_ago,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Lists recent users (limited number).
+  """
+  def list_recent_users(limit \\ 10) do
+    from(u in User,
+      order_by: [desc: u.inserted_at],
+      limit: ^limit,
+      select: [:id, :first_name, :last_name, :email, :inserted_at]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Lists users for admin management with search, filters, and pagination.
+  """
+  def list_users_admin(opts \\ []) do
+    search = Keyword.get(opts, :search, "")
+    filters = Keyword.get(opts, :filters, %{})
+    sort_by = Keyword.get(opts, :sort_by, "inserted_at")
+    sort_order = Keyword.get(opts, :sort_order, "desc")
+    page = Keyword.get(opts, :page, 1)
+    per_page = Keyword.get(opts, :per_page, 20)
+
+    query = from(u in User)
+
+    query
+    |> apply_admin_search(search)
+    |> apply_admin_filters(filters)
+    |> apply_admin_sort(sort_by, sort_order)
+    |> apply_admin_pagination(page, per_page)
+    |> Repo.all()
+  end
+
+  @doc """
+  Counts users for admin management with search and filters.
+  """
+  def count_users_admin(opts \\ []) do
+    search = Keyword.get(opts, :search, "")
+    filters = Keyword.get(opts, :filters, %{})
+
+    query = from(u in User, select: count(u.id))
+
+    query
+    |> apply_admin_search(search)
+    |> apply_admin_filters(filters)
+    |> Repo.one()
+  end
+
+  defp apply_admin_search(query, ""), do: query
+
+  defp apply_admin_search(query, search) do
+    search_term = "%#{search}%"
+
+    from(u in query,
+      where:
+        ilike(u.first_name, ^search_term) or
+          ilike(u.last_name, ^search_term) or
+          ilike(u.email, ^search_term)
+    )
+  end
+
+  defp apply_admin_filters(query, filters) when map_size(filters) == 0, do: query
+
+  defp apply_admin_filters(query, filters) do
+    Enum.reduce(filters, query, fn {key, value}, acc ->
+      case key do
+        :status -> from(u in acc, where: u.account_status == ^value)
+        :role -> from(u in acc, where: u.role == ^value)
+        :subscription -> apply_subscription_filter(acc, value)
+        _ -> acc
+      end
+    end)
+  end
+
+  defp apply_subscription_filter(query, "active") do
+    from(u in query,
+      join: s in assoc(u, :subscriptions),
+      where: s.status in ["active", "trialing"]
+    )
+  end
+
+  defp apply_subscription_filter(query, "inactive") do
+    from(u in query,
+      left_join: s in assoc(u, :subscriptions),
+      where: is_nil(s.id) or s.status not in ["active", "trialing"]
+    )
+  end
+
+  defp apply_subscription_filter(query, _), do: query
+
+  defp apply_admin_sort(query, sort_by, sort_order) do
+    order = if sort_order == "desc", do: :desc, else: :asc
+
+    case sort_by do
+      "first_name" -> from(u in query, order_by: [{^order, u.first_name}])
+      "last_name" -> from(u in query, order_by: [{^order, u.last_name}])
+      "email" -> from(u in query, order_by: [{^order, u.email}])
+      "account_status" -> from(u in query, order_by: [{^order, u.account_status}])
+      "role" -> from(u in query, order_by: [{^order, u.role}])
+      "last_login_at" -> from(u in query, order_by: [{^order, u.last_login_at}])
+      _ -> from(u in query, order_by: [{^order, u.inserted_at}])
+    end
+  end
+
+  defp apply_admin_pagination(query, page, per_page) do
+    offset = (page - 1) * per_page
+
+    from(u in query,
+      limit: ^per_page,
+      offset: ^offset
+    )
   end
 end

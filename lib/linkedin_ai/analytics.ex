@@ -614,4 +614,110 @@ defmodule LinkedinAi.Analytics do
 
     achievements
   end
+
+  ## Admin Dashboard Analytics
+
+  @doc """
+  Calculates user growth rate for admin dashboard.
+  """
+  def calculate_user_growth_rate do
+    current_month_users = count_users_for_month(Date.utc_today())
+    last_month_users = count_users_for_month(Date.add(Date.utc_today(), -30))
+    
+    if last_month_users > 0 do
+      Float.round((current_month_users - last_month_users) / last_month_users * 100, 1)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Calculates user retention rate.
+  """
+  def calculate_retention_rate do
+    # Users who were active last month and are still active this month
+    last_month = Date.add(Date.utc_today(), -30)
+    this_month = Date.utc_today()
+    
+    last_month_active = count_active_users_for_period(last_month, Date.add(last_month, 30))
+    retained_users = count_retained_users(last_month, this_month)
+    
+    if last_month_active > 0 do
+      Float.round(retained_users / last_month_active * 100, 1)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Calculates user churn rate.
+  """
+  def calculate_churn_rate do
+    100.0 - calculate_retention_rate()
+  end
+
+  @doc """
+  Gets average session duration in minutes.
+  """
+  def get_average_session_duration do
+    # Placeholder - implement based on your session tracking
+    45.2
+  end
+
+  @doc """
+  Counts API calls made today.
+  """
+  def count_api_calls_today do
+    today = Date.utc_today()
+    
+    from(ur in UsageRecord,
+      where: fragment("DATE(?)", ur.inserted_at) == ^today,
+      select: sum(ur.usage_count)
+    )
+    |> Repo.one() || 0
+  end
+
+  @doc """
+  Gets average API response time in milliseconds.
+  """
+  def get_average_response_time do
+    # Placeholder - implement based on your monitoring setup
+    125
+  end
+
+  # Helper functions for admin analytics
+  defp count_users_for_month(date) do
+    start_of_month = Date.beginning_of_month(date)
+    end_of_month = Date.end_of_month(date)
+    
+    from(u in User,
+      where: fragment("DATE(?)", u.inserted_at) >= ^start_of_month and 
+             fragment("DATE(?)", u.inserted_at) <= ^end_of_month,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
+
+  defp count_active_users_for_period(start_date, end_date) do
+    from(u in User,
+      where: fragment("DATE(?)", u.last_login_at) >= ^start_date and 
+             fragment("DATE(?)", u.last_login_at) <= ^end_date,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
+
+  defp count_retained_users(last_month, this_month) do
+    last_month_end = Date.add(last_month, 30)
+    this_month_end = Date.add(this_month, 30)
+    
+    from(u in User,
+      where: fragment("DATE(?)", u.last_login_at) >= ^last_month and 
+             fragment("DATE(?)", u.last_login_at) <= ^last_month_end and
+             fragment("DATE(?)", u.last_login_at) >= ^this_month and 
+             fragment("DATE(?)", u.last_login_at) <= ^this_month_end,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
 end

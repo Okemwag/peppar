@@ -22,6 +22,12 @@ defmodule LinkedinAiWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :admin do
+    plug :browser
+    plug :require_authenticated_user
+    plug LinkedinAiWeb.Plugs.RequireAdmin
+  end
+
   scope "/", LinkedinAiWeb do
     pipe_through :browser
 
@@ -102,6 +108,21 @@ defmodule LinkedinAiWeb.Router do
       on_mount: [{LinkedinAiWeb.UserAuth, :mount_current_user}] do
       live "/users/confirm/:token", UserConfirmationLive, :edit
       live "/users/confirm", UserConfirmationInstructionsLive, :new
+    end
+  end
+
+  ## Admin routes
+
+  scope "/admin", LinkedinAiWeb.Admin, as: :admin do
+    pipe_through :admin
+
+    live_session :admin,
+      on_mount: [{LinkedinAiWeb.UserAuth, :ensure_authenticated}] do
+      live "/", DashboardLive, :index
+      live "/users", UserLive, :index
+      live "/users/:id", UserLive, :show
+      live "/subscriptions", SubscriptionLive, :index
+      live "/analytics", AnalyticsLive, :index
     end
   end
 end

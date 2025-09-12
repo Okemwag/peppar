@@ -534,4 +534,32 @@ defmodule LinkedinAi.ProfileOptimization do
   def change_profile_analysis(%ProfileAnalysis{} = profile_analysis, attrs \\ %{}) do
     ProfileAnalysis.changeset(profile_analysis, attrs)
   end
+
+  ## Admin Dashboard Functions
+
+  @doc """
+  Counts profiles analyzed today.
+  """
+  def count_profiles_analyzed_today do
+    today = Date.utc_today()
+    
+    from(pa in ProfileAnalysis,
+      where: fragment("DATE(?)", pa.inserted_at) == ^today,
+      select: count(pa.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Lists recent analyses for admin dashboard.
+  """
+  def list_recent_analyses(limit \\ 10) do
+    from(pa in ProfileAnalysis,
+      order_by: [desc: pa.inserted_at],
+      limit: ^limit,
+      preload: [:user],
+      select: [:id, :analysis_type, :score, :status, :inserted_at, :user_id]
+    )
+    |> Repo.all()
+  end
 end

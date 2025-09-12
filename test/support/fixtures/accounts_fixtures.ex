@@ -23,6 +23,12 @@ defmodule LinkedinAi.AccountsFixtures do
     user
   end
 
+  def admin_user_fixture(attrs \\ %{}) do
+    user = user_fixture(attrs)
+    {:ok, admin_user} = LinkedinAi.Accounts.promote_to_admin(user)
+    admin_user
+  end
+
   def extract_user_token(fun) do
     {:ok, captured_email} = fun.(&"[TOKEN]#{&1}[TOKEN]")
     [_, token | _] = String.split(captured_email.text_body, "[TOKEN]")

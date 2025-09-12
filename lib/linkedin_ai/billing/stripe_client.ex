@@ -311,4 +311,18 @@ defmodule LinkedinAi.Billing.StripeClient do
           raise "Stripe webhook secret environment variable #{env_var} not set."
     end
   end
+
+  ## Health Check
+
+  @doc """
+  Performs a health check on the Stripe API.
+  """
+  def health_check do
+    case get("/account") do
+      {:ok, _account} -> {:ok, :healthy}
+      {:error, %{type: "invalid_request_error"}} -> {:error, :unauthorized}
+      {:error, :network_error} -> {:error, :unhealthy}
+      {:error, _reason} -> {:error, :unhealthy}
+    end
+  end
 end

@@ -500,4 +500,22 @@ defmodule LinkedinAi.Social.LinkedInClient do
         end
     end
   end
+
+  ## Health Check
+
+  @doc """
+  Performs a health check on the LinkedIn API.
+  """
+  def health_check do
+    # LinkedIn doesn't have a dedicated health endpoint, so we'll check if we can reach the API
+    case HTTPoison.get("#{@base_url}/people", [], timeout: 5000) do
+      {:ok, %HTTPoison.Response{status_code: status}} when status in [200, 401] ->
+        # 401 is expected without auth, but means API is reachable
+        {:ok, :healthy}
+      {:ok, %HTTPoison.Response{}} ->
+        {:error, :unhealthy}
+      {:error, _} ->
+        {:error, :unhealthy}
+    end
+  end
 end

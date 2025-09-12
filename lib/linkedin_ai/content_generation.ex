@@ -464,4 +464,32 @@ Looking forward to your thoughts and experiences on this topic.
   def change_content_template(%ContentTemplate{} = content_template, attrs \\ %{}) do
     ContentTemplate.changeset(content_template, attrs)
   end
+
+  ## Admin Dashboard Functions
+
+  @doc """
+  Counts content generated today.
+  """
+  def count_content_generated_today do
+    today = Date.utc_today()
+    
+    from(gc in GeneratedContent,
+      where: fragment("DATE(?)", gc.inserted_at) == ^today,
+      select: count(gc.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Lists recent content for admin dashboard.
+  """
+  def list_recent_content(limit \\ 10) do
+    from(gc in GeneratedContent,
+      order_by: [desc: gc.inserted_at],
+      limit: ^limit,
+      preload: [:user],
+      select: [:id, :content_type, :title, :inserted_at, :user_id]
+    )
+    |> Repo.all()
+  end
 end
