@@ -19,7 +19,7 @@ defmodule LinkedinAi.MixProject do
   def application do
     [
       mod: {LinkedinAi.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :hackney, :ex_aws]
     ]
   end
 
@@ -58,7 +58,23 @@ defmodule LinkedinAi.MixProject do
       {:gettext, "~> 0.26"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      
+      # LinkedIn AI Platform Dependencies
+      {:stripity_stripe, "~> 3.2"},
+      {:openai, "~> 0.6.1"},
+      {:oban, "~> 2.17"},
+      {:httpoison, "~> 2.2"},
+      {:req, "~> 0.5.0"},
+      {:timex, "~> 3.7"},
+      {:ex_aws, "~> 2.5"},
+      {:ex_aws_s3, "~> 2.4"},
+      {:hackney, "~> 1.20"},
+      {:sweet_xml, "~> 0.7"},
+      {:quantum, "~> 3.5"},
+      {:uuid, "~> 1.1"},
+      {:cors_plug, "~> 3.0"},
+      {:plug_cowboy, "~> 2.7"}
     ]
   end
 

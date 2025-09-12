@@ -20,6 +20,31 @@ if System.get_env("PHX_SERVER") do
   config :linkedin_ai, LinkedinAiWeb.Endpoint, server: true
 end
 
+# Configure API keys and external services
+config :linkedin_ai, :openai,
+  api_key: System.get_env("OPENAI_API_KEY"),
+  organization_id: System.get_env("OPENAI_ORG_ID")
+
+config :stripity_stripe,
+  api_key: System.get_env("STRIPE_SECRET_KEY"),
+  public_key: System.get_env("STRIPE_PUBLIC_KEY"),
+  webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET")
+
+config :linkedin_ai, :linkedin,
+  client_id: System.get_env("LINKEDIN_CLIENT_ID"),
+  client_secret: System.get_env("LINKEDIN_CLIENT_SECRET"),
+  redirect_uri: System.get_env("LINKEDIN_REDIRECT_URI")
+
+config :ex_aws,
+  access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
+  region: System.get_env("AWS_REGION") || "us-east-1"
+
+config :ex_aws, :s3,
+  scheme: "https://",
+  host: "s3.amazonaws.com",
+  region: System.get_env("AWS_REGION") || "us-east-1"
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||

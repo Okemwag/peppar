@@ -83,3 +83,28 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Development-specific configurations
+config :linkedin_ai, :openai,
+  api_key: System.get_env("OPENAI_API_KEY") || "sk-dev-key",
+  organization_id: System.get_env("OPENAI_ORG_ID")
+
+config :stripity_stripe,
+  api_key: System.get_env("STRIPE_SECRET_KEY") || "sk_test_dev_key",
+  public_key: System.get_env("STRIPE_PUBLIC_KEY") || "pk_test_dev_key",
+  webhook_secret: System.get_env("STRIPE_WEBHOOK_SECRET") || "whsec_dev_secret"
+
+config :linkedin_ai, :linkedin,
+  client_id: System.get_env("LINKEDIN_CLIENT_ID") || "dev_client_id",
+  client_secret: System.get_env("LINKEDIN_CLIENT_SECRET") || "dev_client_secret",
+  redirect_uri: System.get_env("LINKEDIN_REDIRECT_URI") || "http://localhost:4000/auth/linkedin/callback"
+
+# AWS configuration for development
+config :ex_aws,
+  access_key_id: System.get_env("AWS_ACCESS_KEY_ID") || "dev_access_key",
+  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY") || "dev_secret_key",
+  region: System.get_env("AWS_REGION") || "us-east-1"
+
+# Configure Oban for development
+config :linkedin_ai, Oban,
+  testing: :inline

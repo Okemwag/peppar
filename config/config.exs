@@ -72,6 +72,32 @@ config :logger, :console,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
+# Configure Oban for background job processing
+config :linkedin_ai, Oban,
+  repo: LinkedinAi.Repo,
+  plugins: [Oban.Plugins.Pruner],
+  queues: [
+    default: 10,
+    ai_content: 5,
+    analytics: 3,
+    notifications: 2
+  ]
+
+# Configure Quantum for scheduled tasks
+config :linkedin_ai, LinkedinAi.Scheduler,
+  jobs: [
+    # Daily analytics processing at 2 AM
+    {"0 2 * * *", {LinkedinAi.Analytics, :process_daily_metrics, []}},
+    # Weekly report generation on Sundays at 6 AM
+    {"0 6 * * 0", {LinkedinAi.Reports, :generate_weekly_reports, []}}
+  ]
+
+# Configure CORS
+config :cors_plug,
+  origin: ["http://localhost:3000", "http://localhost:4000"],
+  max_age: 86400,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"

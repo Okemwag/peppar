@@ -350,4 +350,369 @@ defmodule LinkedinAi.Accounts do
       {:error, :user, changeset, _} -> {:error, changeset}
     end
   end
+
+  ## Enhanced User Management
+
+  @doc """
+  Gets a user with preloaded associations.
+
+  ## Examples
+
+      iex> get_user_with_associations!(123)
+      %User{subscription: %Subscription{}, generated_contents: [...]}
+
+  """
+  def get_user_with_associations!(id) do
+    User
+    |> Repo.get!(id)
+    |> Repo.preload([:subscription, :generated_contents, :profile_analyses, :content_templates, :usage_records])
+  end
+
+  @doc """
+  Gets a user by LinkedIn ID.
+
+  ## Examples
+
+      iex> get_user_by_linkedin_id("linkedin_123")
+      %User{}
+
+      iex> get_user_by_linkedin_id("unknown")
+      nil
+
+  """
+  def get_user_by_linkedin_id(linkedin_id) when is_binary(linkedin_id) do
+    Repo.get_by(User, linkedin_id: linkedin_id)
+  end
+
+  @doc """
+  Updates user profile information.
+
+  ## Examples
+
+      iex> update_user_profile(user, %{first_name: "John", last_name: "Doe"})
+      {:ok, %User{}}
+
+      iex> update_user_profile(user, %{first_name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_profile(%User{} = user, attrs) do
+    user
+    |> User.profile_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates user LinkedIn information.
+
+  ## Examples
+
+      iex> update_user_linkedin(user, %{linkedin_id: "123", linkedin_access_token: "token"})
+      {:ok, %User{}}
+
+  """
+  def update_user_linkedin(%User{} = user, attrs) do
+    user
+    |> User.linkedin_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Updates user onboarding progress.
+
+  ## Examples
+
+      iex> update_user_onboarding(user, %{onboarding_step: "profile_setup"})
+      {:ok, %User{}}
+
+  """
+  def update_user_onboarding(%User{} = user, attrs) do
+    user
+    |> User.onboarding_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Completes user onboarding.
+
+  ## Examples
+
+      iex> complete_user_onboarding(user)
+      {:ok, %User{}}
+
+  """
+  def complete_user_onboarding(%User{} = user) do
+    user
+    |> User.onboarding_changeset(%{onboarding_completed: true, onboarding_step: "completed"})
+    |> Repo.update()
+  end
+
+  @doc """
+  Records user login activity.
+
+  ## Examples
+
+      iex> record_user_login(user)
+      {:ok, %User{}}
+
+  """
+  def record_user_login(%User{} = user) do
+    user
+    |> User.login_changeset()
+    |> Repo.update()
+  end
+
+  @doc """
+  Starts user trial period.
+
+  ## Examples
+
+      iex> start_user_trial(user, 14)
+      {:ok, %User{}}
+
+  """
+  def start_user_trial(%User{} = user, trial_days \\ 14) do
+    trial_ends_at = DateTime.utc_now() |> DateTime.add(trial_days, :day)
+    
+    user
+    |> User.trial_changeset(%{trial_ends_at: trial_ends_at, has_used_trial: true})
+    |> Repo.update()
+  end
+
+  @doc """
+  Ends user trial period.
+
+  ## Examples
+
+      iex> end_user_trial(user)
+      {:ok, %User{}}
+
+  """
+  def end_user_trial(%User{} = user) do
+    user
+    |> User.trial_changeset(%{trial_ends_at: nil})
+    |> Repo.update()
+  end
+
+  ## Admin Functions
+
+  @doc """
+  Lists all users with pagination.
+
+  ## Examples
+
+      iex> list_users()
+      [%User{}, ...]
+
+      iex> list_users(page: 2, per_page: 10)
+      [%User{}, ...]
+
+  """
+  def list_users(opts \\ []) do
+    page = Keyword.get(opts, :page, 1)
+    per_page = Keyword.get(opts, :per_page, 20)
+    
+    User
+    |> order_by([u], desc: u.inserted_at)
+    |> limit(^per_page)
+    |> offset(^((page - 1) * per_page))
+    |> Repo.all()
+  end
+
+  @doc """
+  Searches users by email, name, or company.
+
+  ## Examples
+
+      iex> search_users("john")
+      [%User{}, ...]
+
+  """
+  def search_users(query) when is_binary(query) do
+    search_term = "%#{query}%"
+    
+    User
+    |> where([u], 
+      ilike(u.email, ^search_term) or
+      ilike(u.first_name, ^search_term) or
+      ilike(u.last_name, ^search_term) or
+      ilike(u.company, ^search_term)
+    )
+    |> order_by([u], desc: u.inserted_at)
+    |> limit(50)
+    |> Repo.all()
+  end
+
+  @doc """
+  Updates user admin settings.
+
+  ## Examples
+
+      iex> update_user_admin(user, %{role: "admin", account_status: "active"})
+      {:ok, %User{}}
+
+  """
+  def update_user_admin(%User{} = user, attrs) do
+    user
+    |> User.admin_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Suspends a user account.
+
+  ## Examples
+
+      iex> suspend_user(user)
+      {:ok, %User{}}
+
+  """
+  def suspend_user(%User{} = user) do
+    update_user_admin(user, %{account_status: "suspended"})
+  end
+
+  @doc """
+  Activates a user account.
+
+  ## Examples
+
+      iex> activate_user(user)
+      {:ok, %User{}}
+
+  """
+  def activate_user(%User{} = user) do
+    update_user_admin(user, %{account_status: "active"})
+  end
+
+  @doc """
+  Promotes a user to admin.
+
+  ## Examples
+
+      iex> promote_to_admin(user)
+      {:ok, %User{}}
+
+  """
+  def promote_to_admin(%User{} = user) do
+    update_user_admin(user, %{role: "admin", is_admin: true})
+  end
+
+  ## Authorization Helpers
+
+  @doc """
+  Checks if a user can perform an action.
+
+  ## Examples
+
+      iex> can?(user, :manage_users)
+      true
+
+      iex> can?(user, :view_admin_panel)
+      false
+
+  """
+  def can?(%User{} = user, action) do
+    case action do
+      :manage_users -> User.admin?(user)
+      :view_admin_panel -> User.admin?(user)
+      :manage_subscriptions -> User.admin?(user)
+      :view_analytics -> User.admin?(user)
+      :generate_content -> User.active?(user)
+      :analyze_profile -> User.active?(user)
+      _ -> false
+    end
+  end
+
+  @doc """
+  Gets users count by status.
+
+  ## Examples
+
+      iex> get_users_count_by_status()
+      %{active: 100, suspended: 5, banned: 2}
+
+  """
+  def get_users_count_by_status do
+    User
+    |> group_by([u], u.account_status)
+    |> select([u], {u.account_status, count(u.id)})
+    |> Repo.all()
+    |> Enum.into(%{})
+  end
+
+  @doc """
+  Gets users count by role.
+
+  ## Examples
+
+      iex> get_users_count_by_role()
+      %{user: 95, admin: 5}
+
+  """
+  def get_users_count_by_role do
+    User
+    |> group_by([u], u.role)
+    |> select([u], {u.role, count(u.id)})
+    |> Repo.all()
+    |> Enum.into(%{})
+  end
+
+  @doc """
+  Gets recent user registrations.
+
+  ## Examples
+
+      iex> get_recent_registrations(7)
+      [%User{}, ...]
+
+  """
+  def get_recent_registrations(days \\ 7) do
+    since = DateTime.utc_now() |> DateTime.add(-days, :day)
+    
+    User
+    |> where([u], u.inserted_at >= ^since)
+    |> order_by([u], desc: u.inserted_at)
+    |> Repo.all()
+  end
+
+  ## Changeset Helpers
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking user profile changes.
+
+  ## Examples
+
+      iex> change_user_profile(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_profile(%User{} = user, attrs \\ %{}) do
+    User.profile_changeset(user, attrs)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking user LinkedIn changes.
+
+  ## Examples
+
+      iex> change_user_linkedin(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_linkedin(%User{} = user, attrs \\ %{}) do
+    User.linkedin_changeset(user, attrs)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking user onboarding changes.
+
+  ## Examples
+
+      iex> change_user_onboarding(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_onboarding(%User{} = user, attrs \\ %{}) do
+    User.onboarding_changeset(user, attrs)
+  end
 end

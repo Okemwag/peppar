@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# LinkedIn AI Platform Development Setup Script
+
+set -e
+
+echo "🚀 Setting up LinkedIn AI Platform for development..."
+
+# Check if required tools are installed
+command -v mix >/dev/null 2>&1 || { echo "❌ Elixir/Mix is required but not installed. Aborting." >&2; exit 1; }
+command -v node >/dev/null 2>&1 || { echo "❌ Node.js is required but not installed. Aborting." >&2; exit 1; }
+command -v psql >/dev/null 2>&1 || { echo "❌ PostgreSQL is required but not installed. Aborting." >&2; exit 1; }
+
+echo "✅ Required tools found"
+
+# Copy environment file if it doesn't exist
+if [ ! -f .env ]; then
+  echo "📋 Creating .env file from template..."
+  cp .env.example .env
+  echo "⚠️  Please edit .env file with your API keys and configuration"
+else
+  echo "✅ .env file already exists"
+fi
+
+# Install Elixir dependencies
+echo "📦 Installing Elixir dependencies..."
+mix deps.get
+
+# Install Node.js dependencies
+echo "📦 Installing Node.js dependencies..."
+npm --prefix ./assets install
+
+# Setup database
+echo "🗄️  Setting up database..."
+mix ecto.setup
+
+# Build assets
+echo "🎨 Building assets..."
+mix assets.build
+
+echo ""
+echo "🎉 Setup complete!"
+echo ""
+echo "Next steps:"
+echo "1. Edit .env file with your API keys"
+echo "2. Start the server with: mix phx.server"
+echo "3. Visit http://localhost:4000"
+echo ""
+echo "For Docker setup, see README.Docker.md"

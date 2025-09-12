@@ -21,12 +21,15 @@ defmodule LinkedinAiWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/health", HealthController, :check
   end
 
-  # Other scopes may use custom stacks.
-  # scope "/api", LinkedinAiWeb do
-  #   pipe_through :api
-  # end
+  # API routes
+  scope "/api", LinkedinAiWeb do
+    pipe_through :api
+    
+    get "/health", HealthController, :check
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:linkedin_ai, :dev_routes) do

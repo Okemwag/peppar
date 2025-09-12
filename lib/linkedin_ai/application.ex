@@ -14,8 +14,10 @@ defmodule LinkedinAi.Application do
       {Phoenix.PubSub, name: LinkedinAi.PubSub},
       # Start the Finch HTTP client for sending emails
       {Finch, name: LinkedinAi.Finch},
-      # Start a worker by calling: LinkedinAi.Worker.start_link(arg)
-      # {LinkedinAi.Worker, arg},
+      # Start Oban for background job processing
+      {Oban, Application.fetch_env!(:linkedin_ai, Oban)},
+      # Start Quantum scheduler for cron jobs
+      LinkedinAi.Scheduler,
       # Start to serve requests, typically the last entry
       LinkedinAiWeb.Endpoint
     ]
