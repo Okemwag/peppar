@@ -59,10 +59,11 @@ defmodule LinkedinAi.Billing do
 
             case StripeClient.create_checkout_session(session_params) do
               {:ok, session} ->
-                {:ok, %{
-                  checkout_url: session["url"],
-                  session_id: session["id"]
-                }}
+                {:ok,
+                 %{
+                   checkout_url: session["url"],
+                   session_id: session["id"]
+                 }}
 
               {:error, reason} ->
                 Logger.error("Failed to create Stripe checkout session: #{inspect(reason)}")
@@ -299,7 +300,9 @@ defmodule LinkedinAi.Billing do
           if subscription.status == "past_due" do
             case Subscriptions.update_subscription(subscription, %{status: "active"}) do
               {:ok, _} ->
-                Logger.info("Reactivated subscription #{subscription_id} after successful payment")
+                Logger.info(
+                  "Reactivated subscription #{subscription_id} after successful payment"
+                )
 
               {:error, changeset} ->
                 Logger.error("Failed to reactivate subscription: #{inspect(changeset.errors)}")
@@ -326,7 +329,9 @@ defmodule LinkedinAi.Billing do
         %Subscription{} = subscription ->
           case Subscriptions.update_subscription(subscription, %{status: "past_due"}) do
             {:ok, _} ->
-              Logger.info("Marked subscription #{subscription_id} as past_due after failed payment")
+              Logger.info(
+                "Marked subscription #{subscription_id} as past_due after failed payment"
+              )
 
             {:error, changeset} ->
               Logger.error("Failed to update subscription status: #{inspect(changeset.errors)}")
@@ -347,6 +352,7 @@ defmodule LinkedinAi.Billing do
   ## Utility Functions
 
   defp unix_to_datetime(nil), do: nil
+
   defp unix_to_datetime(unix_timestamp) when is_integer(unix_timestamp) do
     DateTime.from_unix!(unix_timestamp)
   end

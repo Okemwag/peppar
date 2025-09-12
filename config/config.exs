@@ -21,7 +21,6 @@ config :linkedin_ai, LinkedinAi.Mailer,
   tls: :always,
   auth: :always
 
-
 # Configures the endpoint
 config :linkedin_ai, LinkedinAiWeb.Endpoint,
   url: [host: "localhost"],

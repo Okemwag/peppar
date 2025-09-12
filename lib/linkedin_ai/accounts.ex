@@ -365,7 +365,13 @@ defmodule LinkedinAi.Accounts do
   def get_user_with_associations!(id) do
     User
     |> Repo.get!(id)
-    |> Repo.preload([:subscription, :generated_contents, :profile_analyses, :content_templates, :usage_records])
+    |> Repo.preload([
+      :subscription,
+      :generated_contents,
+      :profile_analyses,
+      :content_templates,
+      :usage_records
+    ])
   end
 
   @doc """
@@ -473,7 +479,7 @@ defmodule LinkedinAi.Accounts do
   """
   def start_user_trial(%User{} = user, trial_days \\ 14) do
     trial_ends_at = DateTime.utc_now() |> DateTime.add(trial_days, :day)
-    
+
     user
     |> User.trial_changeset(%{trial_ends_at: trial_ends_at, has_used_trial: true})
     |> Repo.update()
@@ -511,7 +517,7 @@ defmodule LinkedinAi.Accounts do
   def list_users(opts \\ []) do
     page = Keyword.get(opts, :page, 1)
     per_page = Keyword.get(opts, :per_page, 20)
-    
+
     User
     |> order_by([u], desc: u.inserted_at)
     |> limit(^per_page)
@@ -530,13 +536,14 @@ defmodule LinkedinAi.Accounts do
   """
   def search_users(query) when is_binary(query) do
     search_term = "%#{query}%"
-    
+
     User
-    |> where([u], 
+    |> where(
+      [u],
       ilike(u.email, ^search_term) or
-      ilike(u.first_name, ^search_term) or
-      ilike(u.last_name, ^search_term) or
-      ilike(u.company, ^search_term)
+        ilike(u.first_name, ^search_term) or
+        ilike(u.last_name, ^search_term) or
+        ilike(u.company, ^search_term)
     )
     |> order_by([u], desc: u.inserted_at)
     |> limit(50)
@@ -668,7 +675,7 @@ defmodule LinkedinAi.Accounts do
   """
   def get_recent_registrations(days \\ 7) do
     since = DateTime.utc_now() |> DateTime.add(-days, :day)
-    
+
     User
     |> where([u], u.inserted_at >= ^since)
     |> order_by([u], desc: u.inserted_at)

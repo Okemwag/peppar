@@ -173,8 +173,8 @@ defmodule LinkedinAi.Billing.StripeClient do
     body = URI.encode_query(flatten_params(params))
 
     case HTTPoison.post(url, body, headers()) do
-      {:ok, %HTTPoison.Response{status_code: status_code, body: response_body}} 
-        when status_code in [200, 201] ->
+      {:ok, %HTTPoison.Response{status_code: status_code, body: response_body}}
+      when status_code in [200, 201] ->
         {:ok, Jason.decode!(response_body)}
 
       {:ok, %HTTPoison.Response{status_code: status_code, body: response_body}} ->
@@ -219,12 +219,12 @@ defmodule LinkedinAi.Billing.StripeClient do
     case Application.get_env(:stripity_stripe, :api_key) do
       nil ->
         raise "Stripe API key not configured. Please set :stripity_stripe, :api_key in your config."
-      
+
       api_key when is_binary(api_key) ->
         api_key
-      
+
       {:system, env_var} ->
-        System.get_env(env_var) || 
+        System.get_env(env_var) ||
           raise "Stripe API key environment variable #{env_var} not set."
     end
   end
@@ -247,24 +247,26 @@ defmodule LinkedinAi.Billing.StripeClient do
   defp flatten_params(params, prefix \\ "") do
     Enum.reduce(params, [], fn {key, value}, acc ->
       new_key = if prefix == "", do: to_string(key), else: "#{prefix}[#{key}]"
-      
+
       case value do
         %{} = map ->
           flatten_params(map, new_key) ++ acc
-        
+
         list when is_list(list) ->
           list
           |> Enum.with_index()
           |> Enum.reduce(acc, fn {item, index}, list_acc ->
             item_key = "#{new_key}[#{index}]"
+
             case item do
               %{} = item_map ->
                 flatten_params(item_map, item_key) ++ list_acc
+
               _ ->
                 [{item_key, to_string(item)} | list_acc]
             end
           end)
-        
+
         _ ->
           [{new_key, to_string(value)} | acc]
       end
@@ -300,12 +302,12 @@ defmodule LinkedinAi.Billing.StripeClient do
     case Application.get_env(:stripity_stripe, :webhook_secret) do
       nil ->
         raise "Stripe webhook secret not configured. Please set :stripity_stripe, :webhook_secret in your config."
-      
+
       secret when is_binary(secret) ->
         secret
-      
+
       {:system, env_var} ->
-        System.get_env(env_var) || 
+        System.get_env(env_var) ||
           raise "Stripe webhook secret environment variable #{env_var} not set."
     end
   end

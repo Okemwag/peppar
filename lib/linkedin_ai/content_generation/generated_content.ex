@@ -2,7 +2,7 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
   @moduledoc """
   Generated content schema for AI-generated LinkedIn content.
   """
-  
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -33,15 +33,40 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
   def changeset(generated_content, attrs) do
     generated_content
     |> cast(attrs, [
-      :user_id, :content_type, :prompt, :generated_text, :tone, :target_audience,
-      :hashtags, :word_count, :is_favorite, :is_published, :published_at,
-      :linkedin_post_id, :engagement_metrics, :generation_model,
-      :generation_tokens_used, :generation_cost, :metadata
+      :user_id,
+      :content_type,
+      :prompt,
+      :generated_text,
+      :tone,
+      :target_audience,
+      :hashtags,
+      :word_count,
+      :is_favorite,
+      :is_published,
+      :published_at,
+      :linkedin_post_id,
+      :engagement_metrics,
+      :generation_model,
+      :generation_tokens_used,
+      :generation_cost,
+      :metadata
     ])
     |> validate_required([:user_id, :content_type, :prompt, :generated_text])
     |> validate_inclusion(:content_type, ["post", "comment", "message", "article"])
-    |> validate_inclusion(:tone, ["professional", "casual", "enthusiastic", "informative", "friendly"])
-    |> validate_inclusion(:target_audience, ["general", "executives", "peers", "industry", "students"])
+    |> validate_inclusion(:tone, [
+      "professional",
+      "casual",
+      "enthusiastic",
+      "informative",
+      "friendly"
+    ])
+    |> validate_inclusion(:target_audience, [
+      "general",
+      "executives",
+      "peers",
+      "industry",
+      "students"
+    ])
     |> validate_length(:prompt, min: 10, max: 1000)
     |> validate_length(:generated_text, min: 1, max: 10000)
     |> validate_number(:word_count, greater_than_or_equal_to: 0)
@@ -74,7 +99,10 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
   def audience_display_name(%__MODULE__{target_audience: "general"}), do: "General Audience"
   def audience_display_name(%__MODULE__{target_audience: "executives"}), do: "Executives"
   def audience_display_name(%__MODULE__{target_audience: "peers"}), do: "Industry Peers"
-  def audience_display_name(%__MODULE__{target_audience: "industry"}), do: "Industry Professionals"
+
+  def audience_display_name(%__MODULE__{target_audience: "industry"}),
+    do: "Industry Professionals"
+
   def audience_display_name(%__MODULE__{target_audience: "students"}), do: "Students"
   def audience_display_name(_), do: "General"
 
@@ -88,12 +116,15 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
       text
     end
   end
+
   def preview(_), do: ""
 
   @doc """
   Checks if the content has engagement metrics.
   """
-  def has_engagement?(%__MODULE__{engagement_metrics: metrics}) when map_size(metrics) > 0, do: true
+  def has_engagement?(%__MODULE__{engagement_metrics: metrics}) when map_size(metrics) > 0,
+    do: true
+
   def has_engagement?(_), do: false
 
   @doc """
@@ -112,7 +143,7 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
   def engagement_rate(%__MODULE__{engagement_metrics: metrics}) do
     views = Map.get(metrics, "views", 0)
     total_engagement = total_engagement(%__MODULE__{engagement_metrics: metrics})
-    
+
     if views > 0 do
       Float.round(total_engagement / views * 100, 2)
     else
@@ -128,6 +159,7 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
     |> Enum.map(&("#" <> &1))
     |> Enum.join(" ")
   end
+
   def hashtags_string(_), do: ""
 
   @doc """
@@ -142,6 +174,7 @@ defmodule LinkedinAi.ContentGeneration.GeneratedContent do
   Gets the generation cost in dollars.
   """
   def cost_in_dollars(%__MODULE__{generation_cost: nil}), do: "$0.00"
+
   def cost_in_dollars(%__MODULE__{generation_cost: cost}) do
     "$" <> Decimal.to_string(cost, :normal)
   end

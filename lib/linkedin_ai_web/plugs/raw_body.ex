@@ -2,7 +2,7 @@ defmodule LinkedinAiWeb.Plugs.RawBody do
   @moduledoc """
   Plug to capture the raw request body for webhook signature verification.
   """
-  
+
   import Plug.Conn
 
   def init(opts), do: opts

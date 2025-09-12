@@ -5,18 +5,22 @@ defmodule LinkedinAi.Repo.Migrations.CreateContentGenerationTables do
     # Generated content table
     create table(:generated_contents) do
       add :user_id, references(:users, on_delete: :delete_all), null: false
-      add :content_type, :string, null: false # "post", "comment", "message", "article"
+      # "post", "comment", "message", "article"
+      add :content_type, :string, null: false
       add :prompt, :text, null: false
       add :generated_text, :text, null: false
-      add :tone, :string # "professional", "casual", "enthusiastic", "informative"
-      add :target_audience, :string # "general", "executives", "peers", "industry"
+      # "professional", "casual", "enthusiastic", "informative"
+      add :tone, :string
+      # "general", "executives", "peers", "industry"
+      add :target_audience, :string
       add :hashtags, {:array, :string}, default: []
       add :word_count, :integer
       add :is_favorite, :boolean, default: false, null: false
       add :is_published, :boolean, default: false, null: false
       add :published_at, :utc_datetime
       add :linkedin_post_id, :string
-      add :engagement_metrics, :map, default: %{} # likes, comments, shares, views
+      # likes, comments, shares, views
+      add :engagement_metrics, :map, default: %{}
       add :generation_model, :string, default: "gpt-3.5-turbo"
       add :generation_tokens_used, :integer
       add :generation_cost, :decimal, precision: 10, scale: 4
@@ -28,15 +32,21 @@ defmodule LinkedinAi.Repo.Migrations.CreateContentGenerationTables do
     # Profile analysis table
     create table(:profile_analyses) do
       add :user_id, references(:users, on_delete: :delete_all), null: false
-      add :analysis_type, :string, null: false # "headline", "summary", "overall", "skills"
+      # "headline", "summary", "overall", "skills"
+      add :analysis_type, :string, null: false
       add :current_content, :text
-      add :analysis_results, :map, null: false # AI analysis results
+      # AI analysis results
+      add :analysis_results, :map, null: false
       add :improvement_suggestions, {:array, :map}, default: []
-      add :score, :integer # 1-100 score
-      add :priority_level, :string, default: "medium" # "low", "medium", "high", "critical"
-      add :status, :string, default: "pending" # "pending", "reviewed", "implemented", "dismissed"
+      # 1-100 score
+      add :score, :integer
+      # "low", "medium", "high", "critical"
+      add :priority_level, :string, default: "medium"
+      # "pending", "reviewed", "implemented", "dismissed"
+      add :status, :string, default: "pending"
       add :implemented_at, :utc_datetime
-      add :linkedin_profile_snapshot, :map, default: %{} # snapshot of LinkedIn data at analysis time
+      # snapshot of LinkedIn data at analysis time
+      add :linkedin_profile_snapshot, :map, default: %{}
       add :analysis_model, :string, default: "gpt-3.5-turbo"
       add :analysis_tokens_used, :integer
       add :analysis_cost, :decimal, precision: 10, scale: 4
@@ -85,7 +95,10 @@ defmodule LinkedinAi.Repo.Migrations.CreateContentGenerationTables do
     create index(:content_templates, [:usage_count])
 
     # Unique constraints
-    create unique_index(:generated_contents, [:linkedin_post_id], where: "linkedin_post_id IS NOT NULL")
+    create unique_index(:generated_contents, [:linkedin_post_id],
+             where: "linkedin_post_id IS NOT NULL"
+           )
+
     create unique_index(:content_templates, [:user_id, :name], where: "user_id IS NOT NULL")
   end
 end

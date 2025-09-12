@@ -97,7 +97,8 @@ config :stripity_stripe,
 config :linkedin_ai, :linkedin,
   client_id: System.get_env("LINKEDIN_CLIENT_ID") || "dev_client_id",
   client_secret: System.get_env("LINKEDIN_CLIENT_SECRET") || "dev_client_secret",
-  redirect_uri: System.get_env("LINKEDIN_REDIRECT_URI") || "http://localhost:4000/auth/linkedin/callback"
+  redirect_uri:
+    System.get_env("LINKEDIN_REDIRECT_URI") || "http://localhost:4000/auth/linkedin/callback"
 
 # AWS configuration for development
 config :ex_aws,
@@ -106,5 +107,4 @@ config :ex_aws,
   region: System.get_env("AWS_REGION") || "us-east-1"
 
 # Configure Oban for development
-config :linkedin_ai, Oban,
-  testing: :inline
+config :linkedin_ai, Oban, testing: :inline

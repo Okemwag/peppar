@@ -2,7 +2,7 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   @moduledoc """
   Profile analysis schema for LinkedIn profile optimization suggestions.
   """
-  
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -30,13 +30,29 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   def changeset(profile_analysis, attrs) do
     profile_analysis
     |> cast(attrs, [
-      :user_id, :analysis_type, :current_content, :analysis_results,
-      :improvement_suggestions, :score, :priority_level, :status,
-      :implemented_at, :linkedin_profile_snapshot, :analysis_model,
-      :analysis_tokens_used, :analysis_cost, :metadata
+      :user_id,
+      :analysis_type,
+      :current_content,
+      :analysis_results,
+      :improvement_suggestions,
+      :score,
+      :priority_level,
+      :status,
+      :implemented_at,
+      :linkedin_profile_snapshot,
+      :analysis_model,
+      :analysis_tokens_used,
+      :analysis_cost,
+      :metadata
     ])
     |> validate_required([:user_id, :analysis_type, :analysis_results])
-    |> validate_inclusion(:analysis_type, ["headline", "summary", "overall", "skills", "experience"])
+    |> validate_inclusion(:analysis_type, [
+      "headline",
+      "summary",
+      "overall",
+      "skills",
+      "experience"
+    ])
     |> validate_inclusion(:priority_level, ["low", "medium", "high", "critical"])
     |> validate_inclusion(:status, ["pending", "reviewed", "implemented", "dismissed"])
     |> validate_number(:score, greater_than_or_equal_to: 0, less_than_or_equal_to: 100)
@@ -48,9 +64,15 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   """
   def analysis_type_display_name(%__MODULE__{analysis_type: "headline"}), do: "Headline Analysis"
   def analysis_type_display_name(%__MODULE__{analysis_type: "summary"}), do: "Summary Analysis"
-  def analysis_type_display_name(%__MODULE__{analysis_type: "overall"}), do: "Overall Profile Analysis"
+
+  def analysis_type_display_name(%__MODULE__{analysis_type: "overall"}),
+    do: "Overall Profile Analysis"
+
   def analysis_type_display_name(%__MODULE__{analysis_type: "skills"}), do: "Skills Analysis"
-  def analysis_type_display_name(%__MODULE__{analysis_type: "experience"}), do: "Experience Analysis"
+
+  def analysis_type_display_name(%__MODULE__{analysis_type: "experience"}),
+    do: "Experience Analysis"
+
   def analysis_type_display_name(_), do: "Unknown Analysis"
 
   @doc """
@@ -97,25 +119,31 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   @doc """
   Checks if the analysis has been completed (implemented or dismissed).
   """
-  def completed?(%__MODULE__{status: status}) when status in ["implemented", "dismissed"], do: true
+  def completed?(%__MODULE__{status: status}) when status in ["implemented", "dismissed"],
+    do: true
+
   def completed?(_), do: false
 
   @doc """
   Gets the number of improvement suggestions.
   """
-  def suggestions_count(%__MODULE__{improvement_suggestions: suggestions}) when is_list(suggestions) do
+  def suggestions_count(%__MODULE__{improvement_suggestions: suggestions})
+      when is_list(suggestions) do
     length(suggestions)
   end
+
   def suggestions_count(_), do: 0
 
   @doc """
   Gets high priority suggestions.
   """
-  def high_priority_suggestions(%__MODULE__{improvement_suggestions: suggestions}) when is_list(suggestions) do
+  def high_priority_suggestions(%__MODULE__{improvement_suggestions: suggestions})
+      when is_list(suggestions) do
     Enum.filter(suggestions, fn suggestion ->
       Map.get(suggestion, "priority") == "high"
     end)
   end
+
   def high_priority_suggestions(_), do: []
 
   @doc """
@@ -137,6 +165,7 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   Gets days since implementation (if implemented).
   """
   def days_since_implemented(%__MODULE__{implemented_at: nil}), do: nil
+
   def days_since_implemented(%__MODULE__{implemented_at: implemented_at}) do
     DateTime.diff(DateTime.utc_now(), implemented_at, :day)
   end
@@ -145,6 +174,7 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   Gets the analysis cost in dollars.
   """
   def cost_in_dollars(%__MODULE__{analysis_cost: nil}), do: "$0.00"
+
   def cost_in_dollars(%__MODULE__{analysis_cost: cost}) do
     "$" <> Decimal.to_string(cost, :normal)
   end
@@ -158,13 +188,16 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
     |> Enum.take(3)
     |> Enum.join(", ")
   end
+
   def results_summary(_), do: "No analysis results available"
 
   @doc """
   Checks if the analysis needs attention (high/critical priority and pending).
   """
-  def needs_attention?(%__MODULE__{priority_level: priority, status: "pending"}) 
-    when priority in ["high", "critical"], do: true
+  def needs_attention?(%__MODULE__{priority_level: priority, status: "pending"})
+      when priority in ["high", "critical"],
+      do: true
+
   def needs_attention?(_), do: false
 
   @doc """
@@ -172,11 +205,12 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   """
   def improvement_areas(%__MODULE__{analysis_results: results}) when is_map(results) do
     results
-    |> Enum.filter(fn {_key, value} -> 
+    |> Enum.filter(fn {_key, value} ->
       String.contains?(String.downcase(to_string(value)), ["needs", "missing", "poor", "weak"])
     end)
     |> Enum.map(fn {key, _value} -> String.replace(key, "_", " ") |> String.capitalize() end)
   end
+
   def improvement_areas(_), do: []
 
   @doc """
@@ -184,10 +218,17 @@ defmodule LinkedinAi.ProfileOptimization.ProfileAnalysis do
   """
   def strengths(%__MODULE__{analysis_results: results}) when is_map(results) do
     results
-    |> Enum.filter(fn {_key, value} -> 
-      String.contains?(String.downcase(to_string(value)), ["good", "excellent", "strong", "well", "present"])
+    |> Enum.filter(fn {_key, value} ->
+      String.contains?(String.downcase(to_string(value)), [
+        "good",
+        "excellent",
+        "strong",
+        "well",
+        "present"
+      ])
     end)
     |> Enum.map(fn {key, _value} -> String.replace(key, "_", " ") |> String.capitalize() end)
   end
+
   def strengths(_), do: []
 end

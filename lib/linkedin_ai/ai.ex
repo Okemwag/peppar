@@ -41,12 +41,13 @@ defmodule LinkedinAi.AI do
         tokens_used = get_in(response, ["usage", "total_tokens"]) || 0
         cost = calculate_cost(tokens_used, "gpt-3.5-turbo")
 
-        {:ok, %{
-          text: content,
-          tokens_used: tokens_used,
-          cost: cost,
-          model: "gpt-3.5-turbo"
-        }}
+        {:ok,
+         %{
+           text: content,
+           tokens_used: tokens_used,
+           cost: cost,
+           model: "gpt-3.5-turbo"
+         }}
 
       {:error, reason} ->
         Logger.error("OpenAI content generation failed: #{inspect(reason)}")
@@ -84,14 +85,15 @@ defmodule LinkedinAi.AI do
         tokens_used = get_in(response, ["usage", "total_tokens"]) || 0
         cost = calculate_cost(tokens_used, "gpt-3.5-turbo")
 
-        {:ok, %{
-          analysis: analysis_result.analysis,
-          suggestions: analysis_result.suggestions,
-          score: analysis_result.score,
-          tokens_used: tokens_used,
-          cost: cost,
-          model: "gpt-3.5-turbo"
-        }}
+        {:ok,
+         %{
+           analysis: analysis_result.analysis,
+           suggestions: analysis_result.suggestions,
+           score: analysis_result.score,
+           tokens_used: tokens_used,
+           cost: cost,
+           model: "gpt-3.5-turbo"
+         }}
 
       {:error, reason} ->
         Logger.error("OpenAI profile analysis failed: #{inspect(reason)}")
@@ -128,46 +130,50 @@ defmodule LinkedinAi.AI do
 
     case content_type do
       "post" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For LinkedIn posts:
-        - Start with a hook to grab attention
-        - Keep paragraphs short for readability
-        - Include a call-to-action or question to encourage engagement
-        - Use 3-5 relevant hashtags
-        - Aim for 150-300 words for optimal engagement
-        """
+          For LinkedIn posts:
+          - Start with a hook to grab attention
+          - Keep paragraphs short for readability
+          - Include a call-to-action or question to encourage engagement
+          - Use 3-5 relevant hashtags
+          - Aim for 150-300 words for optimal engagement
+          """
 
       "comment" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For LinkedIn comments:
-        - Be supportive and add value to the conversation
-        - Keep it concise but meaningful
-        - Ask follow-up questions when appropriate
-        - Avoid being overly promotional
-        """
+          For LinkedIn comments:
+          - Be supportive and add value to the conversation
+          - Keep it concise but meaningful
+          - Ask follow-up questions when appropriate
+          - Avoid being overly promotional
+          """
 
       "message" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For LinkedIn messages:
-        - Be personal and professional
-        - Clearly state the purpose
-        - Keep it brief and respectful
-        - Include a clear call-to-action if needed
-        """
+          For LinkedIn messages:
+          - Be personal and professional
+          - Clearly state the purpose
+          - Keep it brief and respectful
+          - Include a clear call-to-action if needed
+          """
 
       "article" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For LinkedIn articles:
-        - Create a compelling headline
-        - Structure with clear sections and subheadings
-        - Provide actionable insights or valuable information
-        - Include a strong conclusion with key takeaways
-        - Aim for 1000-2000 words for comprehensive coverage
-        """
+          For LinkedIn articles:
+          - Create a compelling headline
+          - Structure with clear sections and subheadings
+          - Provide actionable insights or valuable information
+          - Include a strong conclusion with key takeaways
+          - Aim for 1000-2000 words for comprehensive coverage
+          """
 
       _ ->
         base_prompt
@@ -252,43 +258,46 @@ defmodule LinkedinAi.AI do
 
     case analysis_type do
       "headline" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For headline analysis, focus on:
-        - Clarity and professional impact
-        - Use of relevant keywords
-        - Length (under 220 characters)
-        - Value proposition
-        - Industry-specific terminology
-        - Call-to-action or engagement factor
-        """
+          For headline analysis, focus on:
+          - Clarity and professional impact
+          - Use of relevant keywords
+          - Length (under 220 characters)
+          - Value proposition
+          - Industry-specific terminology
+          - Call-to-action or engagement factor
+          """
 
       "summary" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For summary analysis, focus on:
-        - Professional storytelling
-        - Achievement highlights
-        - Skills and expertise showcase
-        - Call-to-action for connections
-        - Keyword optimization
-        - Length and readability
-        - Personal brand consistency
-        """
+          For summary analysis, focus on:
+          - Professional storytelling
+          - Achievement highlights
+          - Skills and expertise showcase
+          - Call-to-action for connections
+          - Keyword optimization
+          - Length and readability
+          - Personal brand consistency
+          """
 
       "overall" ->
-        base_prompt <> """
+        base_prompt <>
+          """
 
-        For overall profile analysis, consider:
-        - Profile completeness
-        - Professional photo presence
-        - Headline effectiveness
-        - Summary quality
-        - Experience descriptions
-        - Skills and endorsements
-        - Network size and engagement
-        - Content activity
-        """
+          For overall profile analysis, consider:
+          - Profile completeness
+          - Professional photo presence
+          - Headline effectiveness
+          - Summary quality
+          - Experience descriptions
+          - Skills and endorsements
+          - Network size and engagement
+          - Content activity
+          """
 
       _ ->
         base_prompt
@@ -306,7 +315,7 @@ defmodule LinkedinAi.AI do
       "overall" ->
         """
         Analyze this complete LinkedIn profile data:
-        
+
         Headline: #{Map.get(profile_data, :headline, "Not provided")}
         Summary: #{Map.get(profile_data, :summary, "Not provided")}
         Industry: #{Map.get(profile_data, :industry, "Not provided")}
@@ -333,7 +342,7 @@ defmodule LinkedinAi.AI do
 
   defp extract_analysis_from_response(response) do
     content = get_in(response, ["choices", Access.at(0), "message", "content"]) || "{}"
-    
+
     case Jason.decode(content) do
       {:ok, parsed} ->
         %{
@@ -363,11 +372,12 @@ defmodule LinkedinAi.AI do
 
   defp calculate_cost(tokens, model) do
     # OpenAI pricing as of 2024 (approximate)
-    cost_per_1k_tokens = case model do
-      "gpt-3.5-turbo" -> 0.002
-      "gpt-4" -> 0.03
-      _ -> 0.002
-    end
+    cost_per_1k_tokens =
+      case model do
+        "gpt-3.5-turbo" -> 0.002
+        "gpt-4" -> 0.03
+        _ -> 0.002
+      end
 
     Decimal.new(tokens * cost_per_1k_tokens / 1000)
   end
@@ -397,21 +407,24 @@ defmodule LinkedinAi.AI do
           %{
             name: "Industry Insight",
             description: "Share insights about industry trends",
-            prompt: "The {{industry}} industry is experiencing {{trend}}. Here's my take: {{insights}}",
+            prompt:
+              "The {{industry}} industry is experiencing {{trend}}. Here's my take: {{insights}}",
             tone: "informative",
             audience: "industry"
           },
           %{
             name: "Thought Leadership",
             description: "Share expert opinions and thought leadership",
-            prompt: "After {{years}} years in {{field}}, I believe {{opinion}}. Here's why: {{reasoning}}",
+            prompt:
+              "After {{years}} years in {{field}}, I believe {{opinion}}. Here's why: {{reasoning}}",
             tone: "professional",
             audience: "executives"
           },
           %{
             name: "Team Appreciation",
             description: "Appreciate team members or colleagues",
-            prompt: "Grateful to work with {{team_member}} who {{accomplishment}}. {{appreciation_details}}",
+            prompt:
+              "Grateful to work with {{team_member}} who {{accomplishment}}. {{appreciation_details}}",
             tone: "enthusiastic",
             audience: "general"
           }
@@ -422,14 +435,16 @@ defmodule LinkedinAi.AI do
           %{
             name: "Supportive Comment",
             description: "Show support for someone's post",
-            prompt: "Great insights! I especially agree with {{specific_point}}. In my experience, {{personal_experience}}",
+            prompt:
+              "Great insights! I especially agree with {{specific_point}}. In my experience, {{personal_experience}}",
             tone: "friendly",
             audience: "general"
           },
           %{
             name: "Question Comment",
             description: "Ask a thoughtful follow-up question",
-            prompt: "This is really interesting! I'm curious about {{question}}. Have you found {{follow_up_question}}?",
+            prompt:
+              "This is really interesting! I'm curious about {{question}}. Have you found {{follow_up_question}}?",
             tone: "casual",
             audience: "peers"
           }
@@ -440,14 +455,16 @@ defmodule LinkedinAi.AI do
           %{
             name: "Connection Request",
             description: "Request to connect with someone",
-            prompt: "Hi {{name}}, I came across your profile and was impressed by {{specific_detail}}. I'd love to connect and {{reason_to_connect}}",
+            prompt:
+              "Hi {{name}}, I came across your profile and was impressed by {{specific_detail}}. I'd love to connect and {{reason_to_connect}}",
             tone: "professional",
             audience: "general"
           },
           %{
             name: "Follow-up Message",
             description: "Follow up after meeting someone",
-            prompt: "Hi {{name}}, it was great meeting you at {{event}}. I enjoyed our conversation about {{topic}}. {{follow_up_action}}",
+            prompt:
+              "Hi {{name}}, it was great meeting you at {{event}}. I enjoyed our conversation about {{topic}}. {{follow_up_action}}",
             tone: "friendly",
             audience: "general"
           }

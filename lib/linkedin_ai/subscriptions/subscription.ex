@@ -2,7 +2,7 @@ defmodule LinkedinAi.Subscriptions.Subscription do
   @moduledoc """
   Subscription schema for managing user subscriptions with Stripe integration.
   """
-  
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -28,11 +28,26 @@ defmodule LinkedinAi.Subscriptions.Subscription do
   def changeset(subscription, attrs) do
     subscription
     |> cast(attrs, [
-      :user_id, :stripe_subscription_id, :stripe_customer_id, :plan_type, :status,
-      :current_period_start, :current_period_end, :cancel_at_period_end,
-      :canceled_at, :trial_start, :trial_end, :metadata
+      :user_id,
+      :stripe_subscription_id,
+      :stripe_customer_id,
+      :plan_type,
+      :status,
+      :current_period_start,
+      :current_period_end,
+      :cancel_at_period_end,
+      :canceled_at,
+      :trial_start,
+      :trial_end,
+      :metadata
     ])
-    |> validate_required([:user_id, :stripe_subscription_id, :stripe_customer_id, :plan_type, :status])
+    |> validate_required([
+      :user_id,
+      :stripe_subscription_id,
+      :stripe_customer_id,
+      :plan_type,
+      :status
+    ])
     |> validate_inclusion(:plan_type, ["basic", "pro"])
     |> validate_inclusion(:status, ["active", "canceled", "past_due", "unpaid", "trialing"])
     |> unique_constraint(:user_id)
@@ -59,13 +74,13 @@ defmodule LinkedinAi.Subscriptions.Subscription do
     cond do
       trial_start && trial_end && DateTime.compare(trial_start, trial_end) != :lt ->
         add_error(changeset, :trial_end, "must be after trial start")
-      
+
       trial_start && !trial_end ->
         add_error(changeset, :trial_end, "is required when trial start is set")
-      
+
       !trial_start && trial_end ->
         add_error(changeset, :trial_start, "is required when trial end is set")
-      
+
       true ->
         changeset
     end
@@ -89,6 +104,7 @@ defmodule LinkedinAi.Subscriptions.Subscription do
   def in_trial?(%__MODULE__{status: "trialing"}), do: true
   def in_trial?(%__MODULE__{trial_start: nil}), do: false
   def in_trial?(%__MODULE__{trial_end: nil}), do: false
+
   def in_trial?(%__MODULE__{trial_start: trial_start, trial_end: trial_end}) do
     now = DateTime.utc_now()
     DateTime.compare(now, trial_start) != :lt && DateTime.compare(now, trial_end) == :lt
@@ -111,9 +127,10 @@ defmodule LinkedinAi.Subscriptions.Subscription do
   Gets days remaining in current period.
   """
   def days_remaining(%__MODULE__{current_period_end: nil}), do: 0
+
   def days_remaining(%__MODULE__{current_period_end: period_end}) do
     now = DateTime.utc_now()
-    
+
     case DateTime.compare(period_end, now) do
       :gt -> DateTime.diff(period_end, now, :day)
       _ -> 0

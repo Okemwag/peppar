@@ -2,7 +2,7 @@ defmodule LinkedinAi.ContentGeneration.ContentTemplate do
   @moduledoc """
   Content template schema for reusable content generation prompts.
   """
-  
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -28,17 +28,38 @@ defmodule LinkedinAi.ContentGeneration.ContentTemplate do
   def changeset(content_template, attrs) do
     content_template
     |> cast(attrs, [
-      :user_id, :name, :description, :content_type, :template_prompt,
-      :default_tone, :default_audience, :is_public, :is_system_template,
-      :usage_count, :tags, :metadata
+      :user_id,
+      :name,
+      :description,
+      :content_type,
+      :template_prompt,
+      :default_tone,
+      :default_audience,
+      :is_public,
+      :is_system_template,
+      :usage_count,
+      :tags,
+      :metadata
     ])
     |> validate_required([:name, :content_type, :template_prompt])
     |> validate_length(:name, min: 3, max: 100)
     |> validate_length(:description, max: 500)
     |> validate_length(:template_prompt, min: 10, max: 2000)
     |> validate_inclusion(:content_type, ["post", "comment", "message", "article"])
-    |> validate_inclusion(:default_tone, ["professional", "casual", "enthusiastic", "informative", "friendly"])
-    |> validate_inclusion(:default_audience, ["general", "executives", "peers", "industry", "students"])
+    |> validate_inclusion(:default_tone, [
+      "professional",
+      "casual",
+      "enthusiastic",
+      "informative",
+      "friendly"
+    ])
+    |> validate_inclusion(:default_audience, [
+      "general",
+      "executives",
+      "peers",
+      "industry",
+      "students"
+    ])
     |> validate_number(:usage_count, greater_than_or_equal_to: 0)
     |> unique_constraint([:user_id, :name])
   end
@@ -68,7 +89,10 @@ defmodule LinkedinAi.ContentGeneration.ContentTemplate do
   def audience_display_name(%__MODULE__{default_audience: "general"}), do: "General Audience"
   def audience_display_name(%__MODULE__{default_audience: "executives"}), do: "Executives"
   def audience_display_name(%__MODULE__{default_audience: "peers"}), do: "Industry Peers"
-  def audience_display_name(%__MODULE__{default_audience: "industry"}), do: "Industry Professionals"
+
+  def audience_display_name(%__MODULE__{default_audience: "industry"}),
+    do: "Industry Professionals"
+
   def audience_display_name(%__MODULE__{default_audience: "students"}), do: "Students"
   def audience_display_name(_), do: "General"
 
@@ -82,6 +106,7 @@ defmodule LinkedinAi.ContentGeneration.ContentTemplate do
       prompt
     end
   end
+
   def preview(_), do: ""
 
   @doc """
@@ -104,6 +129,7 @@ defmodule LinkedinAi.ContentGeneration.ContentTemplate do
   def tags_string(%__MODULE__{tags: tags}) when is_list(tags) do
     Enum.join(tags, ", ")
   end
+
   def tags_string(_), do: ""
 
   @doc """

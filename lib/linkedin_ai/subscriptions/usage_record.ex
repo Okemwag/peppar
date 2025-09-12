@@ -2,7 +2,7 @@ defmodule LinkedinAi.Subscriptions.UsageRecord do
   @moduledoc """
   Usage record schema for tracking feature usage by users.
   """
-  
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -24,9 +24,9 @@ defmodule LinkedinAi.Subscriptions.UsageRecord do
     |> cast(attrs, [:user_id, :feature_type, :usage_count, :period_start, :period_end, :metadata])
     |> validate_required([:user_id, :feature_type, :usage_count, :period_start, :period_end])
     |> validate_inclusion(:feature_type, [
-      "content_generation", 
-      "profile_analysis", 
-      "linkedin_posts", 
+      "content_generation",
+      "profile_analysis",
+      "linkedin_posts",
       "content_templates",
       "analytics_reports"
     ])
@@ -49,11 +49,18 @@ defmodule LinkedinAi.Subscriptions.UsageRecord do
   @doc """
   Gets the feature display name.
   """
-  def feature_display_name(%__MODULE__{feature_type: "content_generation"}), do: "Content Generation"
+  def feature_display_name(%__MODULE__{feature_type: "content_generation"}),
+    do: "Content Generation"
+
   def feature_display_name(%__MODULE__{feature_type: "profile_analysis"}), do: "Profile Analysis"
   def feature_display_name(%__MODULE__{feature_type: "linkedin_posts"}), do: "LinkedIn Posts"
-  def feature_display_name(%__MODULE__{feature_type: "content_templates"}), do: "Content Templates"
-  def feature_display_name(%__MODULE__{feature_type: "analytics_reports"}), do: "Analytics Reports"
+
+  def feature_display_name(%__MODULE__{feature_type: "content_templates"}),
+    do: "Content Templates"
+
+  def feature_display_name(%__MODULE__{feature_type: "analytics_reports"}),
+    do: "Analytics Reports"
+
   def feature_display_name(_), do: "Unknown Feature"
 
   @doc """
@@ -70,6 +77,7 @@ defmodule LinkedinAi.Subscriptions.UsageRecord do
   def usage_percentage(%__MODULE__{usage_count: usage_count}, limit) when limit > 0 do
     min(100, round(usage_count / limit * 100))
   end
+
   def usage_percentage(_, _), do: 0
 
   @doc """
@@ -78,6 +86,9 @@ defmodule LinkedinAi.Subscriptions.UsageRecord do
   def exceeded_limit?(%__MODULE__{usage_count: usage_count}, limit) when limit > 0 do
     usage_count >= limit
   end
-  def exceeded_limit?(_, -1), do: false  # unlimited
-  def exceeded_limit?(_, _), do: true    # no limit set means exceeded
+
+  # unlimited
+  def exceeded_limit?(_, -1), do: false
+  # no limit set means exceeded
+  def exceeded_limit?(_, _), do: true
 end

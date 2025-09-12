@@ -59,7 +59,7 @@ defmodule LinkedinAi.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
       {:bandit, "~> 1.5"},
-      
+
       # LinkedIn AI Platform Dependencies
       {:stripity_stripe, "~> 3.2"},
       {:openai, "~> 0.6.1"},

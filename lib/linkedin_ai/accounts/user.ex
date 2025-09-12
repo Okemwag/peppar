@@ -105,7 +105,9 @@ defmodule LinkedinAi.Accounts.User do
     # Examples of additional password validation:
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/,
+      message: "at least one digit or punctuation character"
+    )
     |> maybe_hash_password(opts)
   end
 
@@ -213,14 +215,22 @@ defmodule LinkedinAi.Accounts.User do
   def profile_changeset(user, attrs) do
     user
     |> cast(attrs, [
-      :first_name, :last_name, :company, :job_title, :phone, :timezone,
-      :email_notifications, :marketing_emails
+      :first_name,
+      :last_name,
+      :company,
+      :job_title,
+      :phone,
+      :timezone,
+      :email_notifications,
+      :marketing_emails
     ])
     |> validate_length(:first_name, max: 100)
     |> validate_length(:last_name, max: 100)
     |> validate_length(:company, max: 200)
     |> validate_length(:job_title, max: 200)
-    |> validate_format(:phone, ~r/^[\+]?[1-9][\d]{0,15}$/, message: "must be a valid phone number")
+    |> validate_format(:phone, ~r/^[\+]?[1-9][\d]{0,15}$/,
+      message: "must be a valid phone number"
+    )
     |> validate_inclusion(:timezone, Timex.timezones())
   end
 
@@ -230,10 +240,17 @@ defmodule LinkedinAi.Accounts.User do
   def linkedin_changeset(user, attrs) do
     user
     |> cast(attrs, [
-      :linkedin_id, :linkedin_access_token, :linkedin_refresh_token,
-      :linkedin_token_expires_at, :linkedin_profile_url, :linkedin_headline,
-      :linkedin_summary, :linkedin_industry, :linkedin_location,
-      :linkedin_connections_count, :linkedin_profile_picture_url,
+      :linkedin_id,
+      :linkedin_access_token,
+      :linkedin_refresh_token,
+      :linkedin_token_expires_at,
+      :linkedin_profile_url,
+      :linkedin_headline,
+      :linkedin_summary,
+      :linkedin_industry,
+      :linkedin_location,
+      :linkedin_connections_count,
+      :linkedin_profile_picture_url,
       :linkedin_last_synced_at
     ])
     |> validate_required([:linkedin_id])
@@ -250,7 +267,11 @@ defmodule LinkedinAi.Accounts.User do
     user
     |> cast(attrs, [:onboarding_completed, :onboarding_step])
     |> validate_inclusion(:onboarding_step, [
-      "welcome", "profile_setup", "linkedin_connect", "subscription_select", "completed"
+      "welcome",
+      "profile_setup",
+      "linkedin_connect",
+      "subscription_select",
+      "completed"
     ])
   end
 
@@ -269,7 +290,7 @@ defmodule LinkedinAi.Accounts.User do
   """
   def login_changeset(user) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
-    
+
     user
     |> change(
       last_login_at: now,
@@ -326,13 +347,16 @@ defmodule LinkedinAi.Accounts.User do
   @doc """
   Checks if the user has LinkedIn connected.
   """
-  def linkedin_connected?(%__MODULE__{linkedin_id: linkedin_id}) when is_binary(linkedin_id), do: true
+  def linkedin_connected?(%__MODULE__{linkedin_id: linkedin_id}) when is_binary(linkedin_id),
+    do: true
+
   def linkedin_connected?(_), do: false
 
   @doc """
   Checks if the user's LinkedIn token is expired.
   """
   def linkedin_token_expired?(%__MODULE__{linkedin_token_expires_at: nil}), do: true
+
   def linkedin_token_expired?(%__MODULE__{linkedin_token_expires_at: expires_at}) do
     DateTime.compare(expires_at, DateTime.utc_now()) == :lt
   end
@@ -341,6 +365,7 @@ defmodule LinkedinAi.Accounts.User do
   Checks if the user is in trial period.
   """
   def in_trial?(%__MODULE__{trial_ends_at: nil}), do: false
+
   def in_trial?(%__MODULE__{trial_ends_at: trial_ends_at}) do
     DateTime.compare(trial_ends_at, DateTime.utc_now()) == :gt
   end

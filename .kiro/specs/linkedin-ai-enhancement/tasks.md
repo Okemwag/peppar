@@ -83,7 +83,7 @@
   - Write tests for analytics calculations
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
 
-- [-] 5. External API Integrations
+- [x] 5. External API Integrations
 - [x] 5.1 Implement Stripe integration
 
   - Create Stripe client module with error handling
@@ -102,7 +102,7 @@
   - Write integration tests with mocked responses
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 5.3 Implement LinkedIn API integration
+- [x] 5.3 Implement LinkedIn API integration
 
   - Create LinkedIn OAuth flow for profile connection
   - Implement profile data retrieval and parsing

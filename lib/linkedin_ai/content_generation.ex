@@ -25,32 +25,37 @@ defmodule LinkedinAi.ContentGeneration do
 
   """
   def list_user_contents(%User{} = user, filters \\ []) do
-    query = from(gc in GeneratedContent, 
-      where: gc.user_id == ^user.id,
-      order_by: [desc: gc.inserted_at]
-    )
-    
+    query =
+      from(gc in GeneratedContent,
+        where: gc.user_id == ^user.id,
+        order_by: [desc: gc.inserted_at]
+      )
+
     query
     |> apply_content_filters(filters)
     |> Repo.all()
   end
 
   defp apply_content_filters(query, []), do: query
+
   defp apply_content_filters(query, [{:content_type, content_type} | rest]) do
     query
     |> where([gc], gc.content_type == ^content_type)
     |> apply_content_filters(rest)
   end
+
   defp apply_content_filters(query, [{:is_favorite, is_favorite} | rest]) do
     query
     |> where([gc], gc.is_favorite == ^is_favorite)
     |> apply_content_filters(rest)
   end
+
   defp apply_content_filters(query, [{:is_published, is_published} | rest]) do
     query
     |> where([gc], gc.is_published == ^is_published)
     |> apply_content_filters(rest)
   end
+
   defp apply_content_filters(query, [_filter | rest]) do
     apply_content_filters(query, rest)
   end
@@ -107,24 +112,25 @@ defmodule LinkedinAi.ContentGeneration do
       # Generate content with AI
       case generate_ai_content(attrs) do
         {:ok, ai_response} ->
-          content_attrs = Map.merge(attrs, %{
-            user_id: user.id,
-            generated_text: ai_response.text,
-            word_count: count_words(ai_response.text),
-            generation_model: ai_response.model,
-            generation_tokens_used: ai_response.tokens_used,
-            generation_cost: ai_response.cost
-          })
-          
+          content_attrs =
+            Map.merge(attrs, %{
+              user_id: user.id,
+              generated_text: ai_response.text,
+              word_count: count_words(ai_response.text),
+              generation_model: ai_response.model,
+              generation_tokens_used: ai_response.tokens_used,
+              generation_cost: ai_response.cost
+            })
+
           result = create_generated_content(content_attrs)
-          
+
           # Record usage
           if elem(result, 0) == :ok do
             Subscriptions.record_usage(user, "content_generation", 1)
           end
-          
+
           result
-        
+
         {:error, reason} ->
           {:error, reason}
       end
@@ -323,19 +329,22 @@ defmodule LinkedinAi.ContentGeneration do
     prompt = Map.get(attrs, :prompt, "")
     content_type = Map.get(attrs, :content_type, "post")
     tone = Map.get(attrs, :tone, "professional")
-    
+
     if String.length(prompt) < 10 do
       {:error, :prompt_too_short}
     else
       # Mock AI response
       generated_text = generate_mock_content(content_type, tone, prompt)
-      
-      {:ok, %{
-        text: generated_text,
-        model: "gpt-3.5-turbo",
-        tokens_used: String.length(generated_text) |> div(4),  # rough estimate
-        cost: Decimal.new("0.002")  # mock cost
-      }}
+
+      {:ok,
+       %{
+         text: generated_text,
+         model: "gpt-3.5-turbo",
+         # rough estimate
+         tokens_used: String.length(generated_text) |> div(4),
+         # mock cost
+         cost: Decimal.new("0.002")
+       }}
     end
   end
 
@@ -416,11 +425,11 @@ Looking forward to your thoughts and experiences on this topic.
   """
   def get_user_content_stats(%User{} = user) do
     query = from(gc in GeneratedContent, where: gc.user_id == ^user.id)
-    
+
     total_query = from(gc in query, select: count(gc.id))
     favorites_query = from(gc in query, where: gc.is_favorite == true, select: count(gc.id))
     published_query = from(gc in query, where: gc.is_published == true, select: count(gc.id))
-    
+
     %{
       total_generated: Repo.one(total_query),
       favorites: Repo.one(favorites_query),

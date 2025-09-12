@@ -32,14 +32,14 @@ defmodule LinkedinAiWeb.Router do
   # API routes
   scope "/api", LinkedinAiWeb do
     pipe_through :api
-    
+
     get "/health", HealthController, :check
   end
 
   # Webhook routes
   scope "/webhooks", LinkedinAiWeb do
     pipe_through :webhook
-    
+
     post "/stripe", WebhookController, :stripe
   end
 

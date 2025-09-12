@@ -123,23 +123,26 @@ defmodule LinkedinAi.Subscriptions do
   """
   def list_subscriptions(filters \\ []) do
     query = from(s in Subscription, order_by: [desc: s.inserted_at])
-    
+
     query
     |> apply_subscription_filters(filters)
     |> Repo.all()
   end
 
   defp apply_subscription_filters(query, []), do: query
+
   defp apply_subscription_filters(query, [{:status, status} | rest]) do
     query
     |> where([s], s.status == ^status)
     |> apply_subscription_filters(rest)
   end
+
   defp apply_subscription_filters(query, [{:plan_type, plan_type} | rest]) do
     query
     |> where([s], s.plan_type == ^plan_type)
     |> apply_subscription_filters(rest)
   end
+
   defp apply_subscription_filters(query, [_filter | rest]) do
     apply_subscription_filters(query, rest)
   end
@@ -169,7 +172,7 @@ defmodule LinkedinAi.Subscriptions do
           period_start: period_start,
           period_end: period_end
         })
-      
+
       existing_record ->
         update_usage_record(existing_record, %{
           usage_count: existing_record.usage_count + usage_count
@@ -187,9 +190,9 @@ defmodule LinkedinAi.Subscriptions do
 
   """
   def get_usage_record(user_id, feature_type, period_start) do
-    Repo.get_by(UsageRecord, 
-      user_id: user_id, 
-      feature_type: feature_type, 
+    Repo.get_by(UsageRecord,
+      user_id: user_id,
+      feature_type: feature_type,
       period_start: period_start
     )
   end
@@ -206,7 +209,7 @@ defmodule LinkedinAi.Subscriptions do
   def get_current_usage(%User{} = user, feature_type) do
     now = DateTime.utc_now()
     period_start = Timex.beginning_of_month(now)
-    
+
     case get_usage_record(user.id, feature_type, period_start) do
       nil -> 0
       record -> record.usage_count
@@ -225,7 +228,7 @@ defmodule LinkedinAi.Subscriptions do
   def usage_limit_exceeded?(%User{} = user, feature_type) do
     current_usage = get_current_usage(user, feature_type)
     limit = get_usage_limit(user, feature_type)
-    
+
     current_usage >= limit
   end
 
@@ -240,13 +243,16 @@ defmodule LinkedinAi.Subscriptions do
   """
   def get_usage_limit(%User{} = user, feature_type) do
     subscription = get_subscription_by_user_id(user.id)
-    
+
     case {subscription && subscription.plan_type, feature_type} do
       {"basic", "content_generation"} -> 10
-      {"pro", "content_generation"} -> -1  # unlimited
+      # unlimited
+      {"pro", "content_generation"} -> -1
       {"basic", "profile_analysis"} -> 1
-      {"pro", "profile_analysis"} -> -1  # unlimited
-      {nil, _} -> if User.in_trial?(user), do: 3, else: 0  # trial or no subscription
+      # unlimited
+      {"pro", "profile_analysis"} -> -1
+      # trial or no subscription
+      {nil, _} -> if User.in_trial?(user), do: 3, else: 0
       _ -> 0
     end
   end
@@ -296,10 +302,19 @@ defmodule LinkedinAi.Subscriptions do
     total_query = from(s in Subscription, select: count(s.id))
     active_query = from(s in Subscription, where: s.status == "active", select: count(s.id))
     canceled_query = from(s in Subscription, where: s.status == "canceled", select: count(s.id))
-    
-    basic_query = from(s in Subscription, where: s.plan_type == "basic" and s.status == "active", select: count(s.id))
-    pro_query = from(s in Subscription, where: s.plan_type == "pro" and s.status == "active", select: count(s.id))
-    
+
+    basic_query =
+      from(s in Subscription,
+        where: s.plan_type == "basic" and s.status == "active",
+        select: count(s.id)
+      )
+
+    pro_query =
+      from(s in Subscription,
+        where: s.plan_type == "pro" and s.status == "active",
+        select: count(s.id)
+      )
+
     %{
       total_subscriptions: Repo.one(total_query),
       active_subscriptions: Repo.one(active_query),
@@ -321,20 +336,24 @@ defmodule LinkedinAi.Subscriptions do
   def get_monthly_recurring_revenue do
     basic_price = Decimal.new("25.00")
     pro_price = Decimal.new("45.00")
-    
-    basic_count = from(s in Subscription, 
-      where: s.plan_type == "basic" and s.status == "active", 
-      select: count(s.id)
-    ) |> Repo.one()
-    
-    pro_count = from(s in Subscription, 
-      where: s.plan_type == "pro" and s.status == "active", 
-      select: count(s.id)
-    ) |> Repo.one()
-    
+
+    basic_count =
+      from(s in Subscription,
+        where: s.plan_type == "basic" and s.status == "active",
+        select: count(s.id)
+      )
+      |> Repo.one()
+
+    pro_count =
+      from(s in Subscription,
+        where: s.plan_type == "pro" and s.status == "active",
+        select: count(s.id)
+      )
+      |> Repo.one()
+
     basic_revenue = Decimal.mult(basic_price, basic_count)
     pro_revenue = Decimal.mult(pro_price, pro_count)
-    
+
     Decimal.add(basic_revenue, pro_revenue)
   end
 
@@ -350,16 +369,17 @@ defmodule LinkedinAi.Subscriptions do
   def get_feature_usage_stats(feature_type) do
     now = DateTime.utc_now()
     period_start = Timex.beginning_of_month(now)
-    
-    query = from(ur in UsageRecord,
-      where: ur.feature_type == ^feature_type and ur.period_start == ^period_start,
-      select: %{
-        total_usage: sum(ur.usage_count),
-        user_count: count(ur.user_id),
-        avg_usage: avg(ur.usage_count)
-      }
-    )
-    
+
+    query =
+      from(ur in UsageRecord,
+        where: ur.feature_type == ^feature_type and ur.period_start == ^period_start,
+        select: %{
+          total_usage: sum(ur.usage_count),
+          user_count: count(ur.user_id),
+          avg_usage: avg(ur.usage_count)
+        }
+      )
+
     case Repo.one(query) do
       %{total_usage: nil} -> %{total_usage: 0, user_count: 0, avg_usage: 0}
       stats -> stats

@@ -25,32 +25,37 @@ defmodule LinkedinAi.ProfileOptimization do
 
   """
   def list_user_analyses(%User{} = user, filters \\ []) do
-    query = from(pa in ProfileAnalysis, 
-      where: pa.user_id == ^user.id,
-      order_by: [desc: pa.inserted_at]
-    )
-    
+    query =
+      from(pa in ProfileAnalysis,
+        where: pa.user_id == ^user.id,
+        order_by: [desc: pa.inserted_at]
+      )
+
     query
     |> apply_analysis_filters(filters)
     |> Repo.all()
   end
 
   defp apply_analysis_filters(query, []), do: query
+
   defp apply_analysis_filters(query, [{:analysis_type, analysis_type} | rest]) do
     query
     |> where([pa], pa.analysis_type == ^analysis_type)
     |> apply_analysis_filters(rest)
   end
+
   defp apply_analysis_filters(query, [{:status, status} | rest]) do
     query
     |> where([pa], pa.status == ^status)
     |> apply_analysis_filters(rest)
   end
+
   defp apply_analysis_filters(query, [{:priority_level, priority} | rest]) do
     query
     |> where([pa], pa.priority_level == ^priority)
     |> apply_analysis_filters(rest)
   end
+
   defp apply_analysis_filters(query, [_filter | rest]) do
     apply_analysis_filters(query, rest)
   end
@@ -123,20 +128,20 @@ defmodule LinkedinAi.ProfileOptimization do
                 analysis_tokens_used: ai_response.tokens_used,
                 analysis_cost: ai_response.cost
               }
-              
+
               result = create_profile_analysis(analysis_attrs)
-              
+
               # Record usage
               if elem(result, 0) == :ok do
                 Subscriptions.record_usage(user, "profile_analysis", 1)
               end
-              
+
               result
-            
+
             {:error, reason} ->
               {:error, reason}
           end
-        
+
         {:error, reason} ->
           {:error, reason}
       end
@@ -242,16 +247,18 @@ defmodule LinkedinAi.ProfileOptimization do
   defp get_linkedin_profile_data(%User{} = user) do
     if User.linkedin_connected?(user) do
       # Mock LinkedIn profile data - in real implementation, this would call LinkedIn API
-      {:ok, %{
-        headline: user.linkedin_headline || "Professional at Company",
-        summary: user.linkedin_summary || "Experienced professional with expertise in various areas.",
-        industry: user.linkedin_industry || "Technology",
-        location: user.linkedin_location || "San Francisco, CA",
-        connections_count: user.linkedin_connections_count || 500,
-        profile_url: user.linkedin_profile_url,
-        profile_picture_url: user.linkedin_profile_picture_url,
-        last_synced: user.linkedin_last_synced_at || DateTime.utc_now()
-      }}
+      {:ok,
+       %{
+         headline: user.linkedin_headline || "Professional at Company",
+         summary:
+           user.linkedin_summary || "Experienced professional with expertise in various areas.",
+         industry: user.linkedin_industry || "Technology",
+         location: user.linkedin_location || "San Francisco, CA",
+         connections_count: user.linkedin_connections_count || 500,
+         profile_url: user.linkedin_profile_url,
+         profile_picture_url: user.linkedin_profile_picture_url,
+         last_synced: user.linkedin_last_synced_at || DateTime.utc_now()
+       }}
     else
       {:error, :linkedin_not_connected}
     end
@@ -274,53 +281,68 @@ defmodule LinkedinAi.ProfileOptimization do
       "headline" ->
         headline = Map.get(profile_data, :headline, "")
         score = calculate_headline_score(headline)
-        
-        {:ok, %{
-          analysis: %{
-            "clarity" => if(String.length(headline) > 10, do: "Good", else: "Needs improvement"),
-            "keywords" => if(String.contains?(headline, ["Professional", "Expert"]), do: "Present", else: "Missing"),
-            "length" => if(String.length(headline) <= 220, do: "Appropriate", else: "Too long")
-          },
-          suggestions: generate_headline_suggestions(headline),
-          score: score,
-          model: "gpt-3.5-turbo",
-          tokens_used: 150,
-          cost: Decimal.new("0.001")
-        }}
-      
+
+        {:ok,
+         %{
+           analysis: %{
+             "clarity" => if(String.length(headline) > 10, do: "Good", else: "Needs improvement"),
+             "keywords" =>
+               if(String.contains?(headline, ["Professional", "Expert"]),
+                 do: "Present",
+                 else: "Missing"
+               ),
+             "length" => if(String.length(headline) <= 220, do: "Appropriate", else: "Too long")
+           },
+           suggestions: generate_headline_suggestions(headline),
+           score: score,
+           model: "gpt-3.5-turbo",
+           tokens_used: 150,
+           cost: Decimal.new("0.001")
+         }}
+
       "summary" ->
         summary = Map.get(profile_data, :summary, "")
         score = calculate_summary_score(summary)
-        
-        {:ok, %{
-          analysis: %{
-            "structure" => if(String.length(summary) > 100, do: "Well structured", else: "Too brief"),
-            "keywords" => "Industry keywords present",
-            "call_to_action" => if(String.contains?(summary, ["contact", "connect"]), do: "Present", else: "Missing")
-          },
-          suggestions: generate_summary_suggestions(summary),
-          score: score,
-          model: "gpt-3.5-turbo",
-          tokens_used: 200,
-          cost: Decimal.new("0.002")
-        }}
-      
+
+        {:ok,
+         %{
+           analysis: %{
+             "structure" =>
+               if(String.length(summary) > 100, do: "Well structured", else: "Too brief"),
+             "keywords" => "Industry keywords present",
+             "call_to_action" =>
+               if(String.contains?(summary, ["contact", "connect"]),
+                 do: "Present",
+                 else: "Missing"
+               )
+           },
+           suggestions: generate_summary_suggestions(summary),
+           score: score,
+           model: "gpt-3.5-turbo",
+           tokens_used: 200,
+           cost: Decimal.new("0.002")
+         }}
+
       "overall" ->
         score = calculate_overall_score(profile_data)
-        
-        {:ok, %{
-          analysis: %{
-            "completeness" => "Profile is #{if score > 70, do: "well", else: "partially"} completed",
-            "optimization" => "#{if score > 80, do: "Good", else: "Needs improvement"} optimization level",
-            "engagement_potential" => "#{if score > 75, do: "High", else: "Medium"} engagement potential"
-          },
-          suggestions: generate_overall_suggestions(profile_data),
-          score: score,
-          model: "gpt-3.5-turbo",
-          tokens_used: 300,
-          cost: Decimal.new("0.003")
-        }}
-      
+
+        {:ok,
+         %{
+           analysis: %{
+             "completeness" =>
+               "Profile is #{if score > 70, do: "well", else: "partially"} completed",
+             "optimization" =>
+               "#{if score > 80, do: "Good", else: "Needs improvement"} optimization level",
+             "engagement_potential" =>
+               "#{if score > 75, do: "High", else: "Medium"} engagement potential"
+           },
+           suggestions: generate_overall_suggestions(profile_data),
+           score: score,
+           model: "gpt-3.5-turbo",
+           tokens_used: 300,
+           cost: Decimal.new("0.003")
+         }}
+
       _ ->
         {:error, :invalid_analysis_type}
     end
@@ -330,7 +352,11 @@ defmodule LinkedinAi.ProfileOptimization do
     score = 0
     score = score + if String.length(headline) > 10, do: 30, else: 0
     score = score + if String.length(headline) <= 220, do: 20, else: 0
-    score = score + if String.contains?(headline, ["Professional", "Expert", "Manager"]), do: 25, else: 0
+
+    score =
+      score +
+        if String.contains?(headline, ["Professional", "Expert", "Manager"]), do: 25, else: 0
+
     score = score + if String.match?(headline, ~r/\b\w+\b.*\b\w+\b/), do: 25, else: 0
     min(100, score)
   end
@@ -339,8 +365,13 @@ defmodule LinkedinAi.ProfileOptimization do
     score = 0
     score = score + if String.length(summary) > 100, do: 40, else: 0
     score = score + if String.length(summary) <= 2600, do: 20, else: 0
-    score = score + if String.contains?(summary, ["experience", "skills", "expertise"]), do: 20, else: 0
-    score = score + if String.contains?(summary, ["contact", "connect", "reach out"]), do: 20, else: 0
+
+    score =
+      score + if String.contains?(summary, ["experience", "skills", "expertise"]), do: 20, else: 0
+
+    score =
+      score + if String.contains?(summary, ["contact", "connect", "reach out"]), do: 20, else: 0
+
     min(100, score)
   end
 
@@ -361,7 +392,8 @@ defmodule LinkedinAi.ProfileOptimization do
         "type" => "improvement",
         "title" => "Add specific skills or expertise",
         "description" => "Include 2-3 key skills or areas of expertise in your headline",
-        "example" => "Software Engineer | React & Node.js Expert | Building Scalable Web Applications"
+        "example" =>
+          "Software Engineer | React & Node.js Expert | Building Scalable Web Applications"
       },
       %{
         "type" => "optimization",
@@ -403,40 +435,53 @@ defmodule LinkedinAi.ProfileOptimization do
 
   defp generate_overall_suggestions(profile_data) do
     suggestions = []
-    
-    suggestions = if !Map.get(profile_data, :headline) do
-      [%{
-        "type" => "missing_content",
-        "title" => "Add a compelling headline",
-        "description" => "Your headline is the first thing people see. Make it count!",
-        "priority" => "high"
-      } | suggestions]
-    else
-      suggestions
-    end
-    
-    suggestions = if !Map.get(profile_data, :summary) do
-      [%{
-        "type" => "missing_content", 
-        "title" => "Write a professional summary",
-        "description" => "A good summary tells your professional story and attracts the right connections",
-        "priority" => "high"
-      } | suggestions]
-    else
-      suggestions
-    end
-    
-    suggestions = if (Map.get(profile_data, :connections_count) || 0) < 50 do
-      [%{
-        "type" => "networking",
-        "title" => "Grow your network",
-        "description" => "Connect with colleagues, industry peers, and thought leaders",
-        "priority" => "medium"
-      } | suggestions]
-    else
-      suggestions
-    end
-    
+
+    suggestions =
+      if !Map.get(profile_data, :headline) do
+        [
+          %{
+            "type" => "missing_content",
+            "title" => "Add a compelling headline",
+            "description" => "Your headline is the first thing people see. Make it count!",
+            "priority" => "high"
+          }
+          | suggestions
+        ]
+      else
+        suggestions
+      end
+
+    suggestions =
+      if !Map.get(profile_data, :summary) do
+        [
+          %{
+            "type" => "missing_content",
+            "title" => "Write a professional summary",
+            "description" =>
+              "A good summary tells your professional story and attracts the right connections",
+            "priority" => "high"
+          }
+          | suggestions
+        ]
+      else
+        suggestions
+      end
+
+    suggestions =
+      if (Map.get(profile_data, :connections_count) || 0) < 50 do
+        [
+          %{
+            "type" => "networking",
+            "title" => "Grow your network",
+            "description" => "Connect with colleagues, industry peers, and thought leaders",
+            "priority" => "medium"
+          }
+          | suggestions
+        ]
+      else
+        suggestions
+      end
+
     suggestions
   end
 
@@ -458,12 +503,12 @@ defmodule LinkedinAi.ProfileOptimization do
   """
   def get_user_analysis_stats(%User{} = user) do
     query = from(pa in ProfileAnalysis, where: pa.user_id == ^user.id)
-    
+
     total_query = from(pa in query, select: count(pa.id))
     pending_query = from(pa in query, where: pa.status == "pending", select: count(pa.id))
     implemented_query = from(pa in query, where: pa.status == "implemented", select: count(pa.id))
     avg_score_query = from(pa in query, select: avg(pa.score))
-    
+
     %{
       total_analyses: Repo.one(total_query),
       pending: Repo.one(pending_query),

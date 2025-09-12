@@ -6,8 +6,10 @@ defmodule LinkedinAi.Repo.Migrations.CreateSubscriptionsTable do
       add :user_id, references(:users, on_delete: :delete_all), null: false
       add :stripe_subscription_id, :string, null: false
       add :stripe_customer_id, :string, null: false
-      add :plan_type, :string, null: false # "basic" or "pro"
-      add :status, :string, null: false # "active", "canceled", "past_due", "unpaid"
+      # "basic" or "pro"
+      add :plan_type, :string, null: false
+      # "active", "canceled", "past_due", "unpaid"
+      add :status, :string, null: false
       add :current_period_start, :utc_datetime, null: false
       add :current_period_end, :utc_datetime, null: false
       add :cancel_at_period_end, :boolean, default: false
