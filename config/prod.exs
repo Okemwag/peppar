@@ -17,11 +17,57 @@ config :swoosh, local: false
 # Do not print debug messages in production
 config :logger, level: :info
 
+# Structured logging for production
+config :logger, :console,
+  format: "$time $metadata[$level] $message\n",
+  metadata: [:request_id, :user_id, :subscription_id, :mfa]
+
 # Cache configuration for production
 config :linkedin_ai,
   enable_cache: true,
   enable_redis: true,
   cdn_purge_enabled: true
+
+# Phoenix LiveDashboard configuration for production
+config :linkedin_ai, LinkedinAiWeb.Endpoint,
+  live_dashboard: [
+    metrics: LinkedinAiWeb.Telemetry,
+    additional_pages: [
+      oban: Oban.Web.Dashboard
+    ]
+  ]
+
+# SSL configuration
+config :linkedin_ai, LinkedinAiWeb.Endpoint,
+  force_ssl: [rewrite_on: [:x_forwarded_proto]],
+  secure_cookie_flag: true
+
+# Session configuration for production
+config :linkedin_ai, LinkedinAiWeb.Endpoint,
+  session_options: [
+    store: :cookie,
+    key: "_linkedin_ai_key",
+    signing_salt: "linkedin_ai_signing_salt",
+    same_site: "Lax",
+    secure: true,
+    http_only: true,
+    max_age: 86400 * 30  # 30 days
+  ]
+
+# CORS configuration for production
+config :cors_plug,
+  origin: {LinkedinAi.CORS, :origin_allowed?, []},
+  max_age: 86400,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  headers: [
+    "Authorization", "Content-Type", "Accept", "Origin", 
+    "User-Agent", "DNT", "Cache-Control", "X-Mx-ReqToken", 
+    "Keep-Alive", "X-Requested-With", "If-Modified-Since", 
+    "X-CSRF-Token"
+  ]
+
+# Telemetry configuration
+config :telemetry_poller, :default, period: 30_000
 
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.

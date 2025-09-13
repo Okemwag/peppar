@@ -9,7 +9,53 @@ defmodule LinkedinAi.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
-      deps: deps()
+      deps: deps(),
+      
+      # Documentation
+      name: "LinkedIn AI Platform",
+      description: "AI-powered LinkedIn optimization platform",
+      source_url: "https://github.com/your-org/linkedin-ai-platform",
+      homepage_url: "https://linkedin-ai-platform.com",
+      docs: [
+        main: "readme",
+        logo: "assets/static/images/logo.png",
+        extras: [
+          "README.md",
+          "docs/deployment.md",
+          "docs/configuration.md",
+          "docs/user-guide.md",
+          "docs/api-reference.md"
+        ],
+        groups_for_modules: [
+          "Core Contexts": [
+            LinkedinAi.Accounts,
+            LinkedinAi.Subscriptions,
+            LinkedinAi.AI,
+            LinkedinAi.Social,
+            LinkedinAi.Analytics,
+            LinkedinAi.Performance
+          ],
+          "External Integrations": [
+            LinkedinAi.AI.OpenAIClient,
+            LinkedinAi.Social.LinkedInClient,
+            LinkedinAi.Subscriptions.StripeClient
+          ],
+          "Web Interface": [
+            LinkedinAiWeb.Router,
+            LinkedinAiWeb.Endpoint,
+            LinkedinAiWeb.DashboardLive,
+            LinkedinAiWeb.ContentLive,
+            LinkedinAiWeb.ProfileLive,
+            LinkedinAiWeb.SubscriptionLive,
+            LinkedinAiWeb.AdminLive
+          ],
+          "Background Jobs": [
+            LinkedinAi.Workers.ContentGenerationWorker,
+            LinkedinAi.Workers.AnalyticsWorker,
+            LinkedinAi.Workers.ProfileAnalysisWorker
+          ]
+        ]
+      ]
     ]
   end
 
@@ -77,7 +123,8 @@ defmodule LinkedinAi.MixProject do
       {:plug_cowboy, "~> 2.7"},
       {:mox, "~> 1.0", only: :test},
       {:redix, "~> 1.2"},
-      {:cachex, "~> 3.6"}
+      {:cachex, "~> 3.6"},
+      {:ex_doc, "~> 0.31", only: :dev, runtime: false}
     ]
   end
 

@@ -1,0 +1,152 @@
+groups:
+  - name: linkedin_ai_alerts
+    rules:
+      # Application Health Alerts
+      - alert: ApplicationDown
+        expr: up{job="linkedin-ai-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "LinkedIn AI Platform application is down"
+          description: "The LinkedIn AI Platform application has been down for more than 1 minute."
+
+      - alert: HighErrorRate
+        expr: rate(phoenix_endpoint_stop_duration_count{status=~"5.."}[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second."
+
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(phoenix_endpoint_stop_duration_bucket[5m])) > 2000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}ms."
+
+      # Database Alerts
+      - alert: DatabaseDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL database has been down for more than 1 minute."
+
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_database_numbackends / pg_settings_max_connections > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection usage is {{ $value | humanizePercentage }}."
+
+      - alert: DatabaseSlowQueries
+        expr: rate(pg_stat_database_tup_fetched[5m]) / rate(pg_stat_database_tup_returned[5m]) < 0.1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database queries are slow"
+          description: "Database query efficiency is low."
+
+      # Redis Alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute."
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis memory usage is high"
+          description: "Redis memory usage is {{ $value | humanizePercentage }}."
+
+      # System Resource Alerts
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}."
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}."
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Disk space is {{ $value | humanizePercentage }} full on {{ $labels.instance }}."
+
+      # Business Logic Alerts
+      - alert: HighContentGenerationFailureRate
+        expr: rate(linkedin_ai_content_generation_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High content generation failure rate"
+          description: "Content generation failure rate is {{ $value }} per second."
+
+      - alert: StripeWebhookFailures
+        expr: rate(linkedin_ai_stripe_webhook_failures_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Stripe webhook failures detected"
+          description: "Stripe webhook failure rate is {{ $value }} per second."
+
+      - alert: OpenAIAPIErrors
+        expr: rate(linkedin_ai_openai_api_errors_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "OpenAI API errors detected"
+          description: "OpenAI API error rate is {{ $value }} per second."
+
+      # User Experience Alerts
+      - alert: LowUserRegistrations
+        expr: rate(linkedin_ai_user_registrations_total[1h]) < 0.01
+        for: 2h
+        labels:
+          severity: info
+        annotations:
+          summary: "Low user registration rate"
+          description: "User registration rate is {{ $value }} per hour."
+
+      - alert: HighSubscriptionCancellations
+        expr: rate(linkedin_ai_subscription_cancellations_total[1h]) > 0.1
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "High subscription cancellation rate"
+          description: "Subscription cancellation rate is {{ $value }} per hour."
