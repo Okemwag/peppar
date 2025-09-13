@@ -74,7 +74,10 @@ defmodule LinkedinAi.MixProject do
       {:quantum, "~> 3.5"},
       {:uuid, "~> 1.1"},
       {:cors_plug, "~> 3.0"},
-      {:plug_cowboy, "~> 2.7"}
+      {:plug_cowboy, "~> 2.7"},
+      {:mox, "~> 1.0", only: :test},
+      {:redix, "~> 1.2"},
+      {:cachex, "~> 3.6"}
     ]
   end
 

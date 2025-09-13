@@ -7,7 +7,7 @@ defmodule LinkedinAiWeb.Plugs.RequireAdminTest do
   describe "RequireAdmin plug" do
     test "allows admin users to proceed", %{conn: conn} do
       admin_user = AccountsFixtures.admin_user_fixture()
-      
+
       conn =
         conn
         |> assign(:current_user, admin_user)
@@ -18,7 +18,7 @@ defmodule LinkedinAiWeb.Plugs.RequireAdminTest do
 
     test "redirects regular users to dashboard with error", %{conn: conn} do
       user = AccountsFixtures.user_fixture()
-      
+
       conn =
         conn
         |> assign(:current_user, user)
@@ -26,7 +26,9 @@ defmodule LinkedinAiWeb.Plugs.RequireAdminTest do
 
       assert conn.halted
       assert redirected_to(conn) == "/dashboard"
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Access denied. Admin privileges required."
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Access denied. Admin privileges required."
     end
 
     test "redirects unauthenticated users to login", %{conn: conn} do
@@ -39,7 +41,7 @@ defmodule LinkedinAiWeb.Plugs.RequireAdminTest do
 
     test "redirects suspended admin users to dashboard", %{conn: conn} do
       admin_user = AccountsFixtures.admin_user_fixture(%{account_status: "suspended"})
-      
+
       conn =
         conn
         |> assign(:current_user, admin_user)
@@ -47,7 +49,9 @@ defmodule LinkedinAiWeb.Plugs.RequireAdminTest do
 
       assert conn.halted
       assert redirected_to(conn) == "/dashboard"
-      assert Phoenix.Flash.get(conn.assigns.flash, :error) == "Account suspended. Please contact support."
+
+      assert Phoenix.Flash.get(conn.assigns.flash, :error) ==
+               "Account suspended. Please contact support."
     end
   end
 end

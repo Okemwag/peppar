@@ -17,5 +17,11 @@ config :swoosh, local: false
 # Do not print debug messages in production
 config :logger, level: :info
 
+# Cache configuration for production
+config :linkedin_ai,
+  enable_cache: true,
+  enable_redis: true,
+  cdn_purge_enabled: true
+
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.

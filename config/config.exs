@@ -74,12 +74,25 @@ config :phoenix, :json_library, Jason
 # Configure Oban for background job processing
 config :linkedin_ai, Oban,
   repo: LinkedinAi.Repo,
-  plugins: [Oban.Plugins.Pruner],
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: [
+       {"0 2 * * *", LinkedinAi.Jobs.AnalyticsProcessingJob,
+        args: %{type: "daily", date: Date.utc_today()}},
+       {"0 6 * * 0", LinkedinAi.Jobs.AnalyticsProcessingJob,
+        args: %{type: "weekly", date: Date.utc_today()}},
+       {"0 */5 * * *", LinkedinAi.Jobs.HealthCheckJob},
+       {"0 3 * * *", LinkedinAi.Jobs.DataCleanupJob, args: %{cleanup_type: "all", days_old: 30}}
+     ]}
+  ],
   queues: [
     default: 10,
-    ai_content: 5,
+    content_generation: 5,
     analytics: 3,
-    notifications: 2
+    notifications: 8,
+    maintenance: 2,
+    monitoring: 1
   ]
 
 # Configure Quantum for scheduled tasks

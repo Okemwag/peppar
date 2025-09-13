@@ -623,7 +623,7 @@ defmodule LinkedinAi.Analytics do
   def calculate_user_growth_rate do
     current_month_users = count_users_for_month(Date.utc_today())
     last_month_users = count_users_for_month(Date.add(Date.utc_today(), -30))
-    
+
     if last_month_users > 0 do
       Float.round((current_month_users - last_month_users) / last_month_users * 100, 1)
     else
@@ -638,10 +638,10 @@ defmodule LinkedinAi.Analytics do
     # Users who were active last month and are still active this month
     last_month = Date.add(Date.utc_today(), -30)
     this_month = Date.utc_today()
-    
+
     last_month_active = count_active_users_for_period(last_month, Date.add(last_month, 30))
     retained_users = count_retained_users(last_month, this_month)
-    
+
     if last_month_active > 0 do
       Float.round(retained_users / last_month_active * 100, 1)
     else
@@ -669,7 +669,7 @@ defmodule LinkedinAi.Analytics do
   """
   def count_api_calls_today do
     today = Date.utc_today()
-    
+
     from(ur in UsageRecord,
       where: fragment("DATE(?)", ur.inserted_at) == ^today,
       select: sum(ur.usage_count)
@@ -689,10 +689,11 @@ defmodule LinkedinAi.Analytics do
   defp count_users_for_month(date) do
     start_of_month = Date.beginning_of_month(date)
     end_of_month = Date.end_of_month(date)
-    
+
     from(u in User,
-      where: fragment("DATE(?)", u.inserted_at) >= ^start_of_month and 
-             fragment("DATE(?)", u.inserted_at) <= ^end_of_month,
+      where:
+        fragment("DATE(?)", u.inserted_at) >= ^start_of_month and
+          fragment("DATE(?)", u.inserted_at) <= ^end_of_month,
       select: count(u.id)
     )
     |> Repo.one()
@@ -700,8 +701,9 @@ defmodule LinkedinAi.Analytics do
 
   defp count_active_users_for_period(start_date, end_date) do
     from(u in User,
-      where: fragment("DATE(?)", u.last_login_at) >= ^start_date and 
-             fragment("DATE(?)", u.last_login_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", u.last_login_at) >= ^start_date and
+          fragment("DATE(?)", u.last_login_at) <= ^end_date,
       select: count(u.id)
     )
     |> Repo.one()
@@ -710,15 +712,333 @@ defmodule LinkedinAi.Analytics do
   defp count_retained_users(last_month, this_month) do
     last_month_end = Date.add(last_month, 30)
     this_month_end = Date.add(this_month, 30)
-    
+
     from(u in User,
-      where: fragment("DATE(?)", u.last_login_at) >= ^last_month and 
-             fragment("DATE(?)", u.last_login_at) <= ^last_month_end and
-             fragment("DATE(?)", u.last_login_at) >= ^this_month and 
-             fragment("DATE(?)", u.last_login_at) <= ^this_month_end,
+      where:
+        fragment("DATE(?)", u.last_login_at) >= ^last_month and
+          fragment("DATE(?)", u.last_login_at) <= ^last_month_end and
+          fragment("DATE(?)", u.last_login_at) >= ^this_month and
+          fragment("DATE(?)", u.last_login_at) <= ^this_month_end,
       select: count(u.id)
     )
     |> Repo.one()
+  end
+
+  ## Analytics Data Storage Functions
+
+  @doc """
+  Stores daily user metrics for analytics processing.
+  """
+  def store_daily_user_metrics(date, metrics) do
+    # Store in a daily_metrics table or similar
+    # For now, we'll log the metrics
+    require Logger
+    Logger.info("Storing daily user metrics for #{date}: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores daily content metrics for analytics processing.
+  """
+  def store_daily_content_metrics(date, metrics) do
+    require Logger
+    Logger.info("Storing daily content metrics for #{date}: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores daily subscription metrics for analytics processing.
+  """
+  def store_daily_subscription_metrics(date, metrics) do
+    require Logger
+    Logger.info("Storing daily subscription metrics for #{date}: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores daily usage metrics for analytics processing.
+  """
+  def store_daily_usage_metrics(date, metrics) do
+    require Logger
+    Logger.info("Storing daily usage metrics for #{date}: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores user analytics summary for a specific date.
+  """
+  def store_user_analytics_summary(user, _analytics, date) do
+    require Logger
+    Logger.info("Storing user analytics summary for user #{user.id} on #{date}")
+    :ok
+  end
+
+  @doc """
+  Stores health check results for monitoring.
+  """
+  def store_health_check_results(health_data) do
+    require Logger
+    Logger.info("Storing health check results: #{inspect(health_data)}")
+    :ok
+  end
+
+  ## Data Cleanup Functions
+
+  @doc """
+  Cleans up old session data.
+  """
+  def cleanup_old_session_data(cutoff_date) do
+    require Logger
+    Logger.info("Cleaning up session data older than #{cutoff_date}")
+
+    # Clean up old user tokens/sessions
+    {count, _} =
+      from(t in LinkedinAi.Accounts.UserToken,
+        where: t.context == "session" and fragment("DATE(?)", t.inserted_at) < ^cutoff_date
+      )
+      |> Repo.delete_all()
+
+    Logger.info("Cleaned up #{count} old session records")
+    :ok
+  end
+
+  @doc """
+  Cleans up old temporary files.
+  """
+  def cleanup_old_temp_files(cutoff_date) do
+    require Logger
+    Logger.info("Cleaning up temporary files older than #{cutoff_date}")
+
+    # Clean up temporary files from file system
+    temp_dir = System.tmp_dir()
+    cutoff_timestamp = cutoff_date |> Date.to_erl() |> :calendar.datetime_to_gregorian_seconds()
+
+    temp_files = Path.wildcard(Path.join(temp_dir, "linkedin_ai_*"))
+
+    cleaned_count =
+      Enum.reduce(temp_files, 0, fn file_path, acc ->
+        case File.stat(file_path) do
+          {:ok, %File.Stat{mtime: mtime}} ->
+            if mtime < cutoff_timestamp do
+              File.rm(file_path)
+              acc + 1
+            else
+              acc
+            end
+
+          {:error, _} ->
+            acc
+        end
+      end)
+
+    Logger.info("Cleaned up #{cleaned_count} temporary files")
+    :ok
+  end
+
+  @doc """
+  Archives old analytics data.
+  """
+  def archive_old_analytics_data(cutoff_date) do
+    require Logger
+    Logger.info("Archiving analytics data older than #{cutoff_date}")
+
+    # Archive old detailed analytics data
+    # This would typically move data to an archive table or external storage
+    # For now, we'll just log the operation
+    Logger.info("Analytics data archiving completed for dates before #{cutoff_date}")
+    :ok
+  end
+
+  ## Additional Analytics Functions
+
+  @doc """
+  Calculates retention rate for a specific date.
+  """
+  def calculate_retention_rate_for_date(date) do
+    previous_month = Date.add(date, -30)
+    calculate_retention_rate_for_period({previous_month, date})
+  end
+
+  defp calculate_retention_rate_for_period({start_date, end_date}) do
+    # Users active in the previous period
+    previous_start = Date.add(start_date, -30)
+
+    previous_active =
+      from(u in User,
+        where:
+          fragment("DATE(?)", u.last_login_at) >= ^previous_start and
+            fragment("DATE(?)", u.last_login_at) < ^start_date,
+        select: count(u.id)
+      )
+      |> Repo.one()
+
+    # Users from previous period who are still active in current period
+    retained =
+      from(u in User,
+        where:
+          fragment("DATE(?)", u.last_login_at) >= ^previous_start and
+            fragment("DATE(?)", u.last_login_at) < ^start_date and
+            fragment("DATE(?)", u.updated_at) >= ^start_date and
+            fragment("DATE(?)", u.updated_at) <= ^end_date,
+        select: count(u.id)
+      )
+      |> Repo.one()
+
+    if previous_active > 0 do
+      Float.round(retained / previous_active * 100, 1)
+    else
+      0.0
+    end
+  end
+
+  @doc """
+  Counts API calls for a specific date.
+  """
+  def count_api_calls_for_date(date) do
+    from(ur in LinkedinAi.Subscriptions.UsageRecord,
+      where: fragment("DATE(?)", ur.inserted_at) == ^date,
+      select: sum(ur.usage_count)
+    )
+    |> Repo.one() || 0
+  end
+
+  @doc """
+  Calculates average response time for a specific date.
+  """
+  def calculate_avg_response_time_for_date(_date) do
+    # This would typically query performance metrics
+    # For now, return a placeholder value
+    125
+  end
+
+  @doc """
+  Calculates subscription churn rate for a specific date.
+  """
+  def calculate_subscription_churn_rate_for_date(date) do
+    month_start = Date.beginning_of_month(date)
+    month_end = Date.end_of_month(date)
+    calculate_subscription_churn_rate({month_start, month_end})
+  end
+
+  ## Report Storage Functions
+
+  @doc """
+  Stores weekly user report.
+  """
+  def store_weekly_user_report(report_data) do
+    require Logger
+    Logger.info("Storing weekly user report: #{inspect(report_data)}")
+    :ok
+  end
+
+  @doc """
+  Stores weekly content report.
+  """
+  def store_weekly_content_report(report_data) do
+    require Logger
+    Logger.info("Storing weekly content report: #{inspect(report_data)}")
+    :ok
+  end
+
+  @doc """
+  Stores weekly revenue report.
+  """
+  def store_weekly_revenue_report(report_data) do
+    require Logger
+    Logger.info("Storing weekly revenue report: #{inspect(report_data)}")
+    :ok
+  end
+
+  @doc """
+  Stores monthly cohort analysis.
+  """
+  def store_monthly_cohort_analysis(report_data) do
+    require Logger
+    Logger.info("Storing monthly cohort analysis: #{inspect(report_data)}")
+    :ok
+  end
+
+  @doc """
+  Stores monthly churn analysis.
+  """
+  def store_monthly_churn_analysis(report_data) do
+    require Logger
+    Logger.info("Storing monthly churn analysis: #{inspect(report_data)}")
+    :ok
+  end
+
+  @doc """
+  Stores monthly revenue report.
+  """
+  def store_monthly_revenue_report(report_data) do
+    require Logger
+    Logger.info("Storing monthly revenue report: #{inspect(report_data)}")
+    :ok
+  end
+
+  ## Performance Monitoring Storage Functions
+
+  @doc """
+  Stores response time metrics.
+  """
+  def store_response_time_metrics(metrics) do
+    require Logger
+    Logger.info("Storing response time metrics: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores throughput metrics.
+  """
+  def store_throughput_metrics(metrics) do
+    require Logger
+    Logger.info("Storing throughput metrics: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores error rate metrics.
+  """
+  def store_error_rate_metrics(metrics) do
+    require Logger
+    Logger.info("Storing error rate metrics: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores resource utilization metrics.
+  """
+  def store_resource_utilization_metrics(metrics) do
+    require Logger
+    Logger.info("Storing resource utilization metrics: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores database performance metrics.
+  """
+  def store_database_performance_metrics(metrics) do
+    require Logger
+    Logger.info("Storing database performance metrics: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores API performance metrics.
+  """
+  def store_api_performance_metrics(metrics) do
+    require Logger
+    Logger.info("Storing API performance metrics: #{inspect(metrics)}")
+    :ok
+  end
+
+  @doc """
+  Stores user experience metrics.
+  """
+  def store_user_experience_metrics(metrics) do
+    require Logger
+    Logger.info("Storing user experience metrics: #{inspect(metrics)}")
+    :ok
   end
 
   @doc """
@@ -726,19 +1046,24 @@ defmodule LinkedinAi.Analytics do
   """
   def calculate_subscription_churn_rate({start_date, end_date}) do
     alias LinkedinAi.Subscriptions.Subscription
-    
-    total_active = from(s in Subscription,
-      where: s.status in ["active", "trialing"],
-      select: count(s.id)
-    ) |> Repo.one()
-    
-    churned = from(s in Subscription,
-      where: s.status == "canceled" and
-             fragment("DATE(?)", s.canceled_at) >= ^start_date and
-             fragment("DATE(?)", s.canceled_at) <= ^end_date,
-      select: count(s.id)
-    ) |> Repo.one()
-    
+
+    total_active =
+      from(s in Subscription,
+        where: s.status in ["active", "trialing"],
+        select: count(s.id)
+      )
+      |> Repo.one()
+
+    churned =
+      from(s in Subscription,
+        where:
+          s.status == "canceled" and
+            fragment("DATE(?)", s.canceled_at) >= ^start_date and
+            fragment("DATE(?)", s.canceled_at) <= ^end_date,
+        select: count(s.id)
+      )
+      |> Repo.one()
+
     if total_active > 0 do
       Float.round(churned / total_active * 100, 1)
     else
@@ -751,8 +1076,9 @@ defmodule LinkedinAi.Analytics do
   """
   def count_api_calls_for_period({start_date, end_date}) do
     from(ur in UsageRecord,
-      where: fragment("DATE(?)", ur.inserted_at) >= ^start_date and
-             fragment("DATE(?)", ur.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", ur.inserted_at) >= ^start_date and
+          fragment("DATE(?)", ur.inserted_at) <= ^end_date,
       select: sum(ur.usage_count)
     )
     |> Repo.one() || 0

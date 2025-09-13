@@ -4,6 +4,8 @@ defmodule LinkedinAi.AI do
   Handles OpenAI integration for content generation and profile analysis.
   """
 
+  @behaviour LinkedinAi.AI.Behaviour
+
   alias LinkedinAi.AI.OpenAIClient
 
   require Logger

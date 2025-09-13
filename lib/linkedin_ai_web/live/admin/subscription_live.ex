@@ -6,14 +6,13 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
   use LinkedinAiWeb, :live_view
 
   alias LinkedinAi.{Billing, Analytics, Subscriptions}
-  alias LinkedinAi.Subscriptions.Subscription
 
   @impl true
   def mount(_params, _session, socket) do
     if connected?(socket) do
       # Subscribe to real-time updates
       Phoenix.PubSub.subscribe(LinkedinAi.PubSub, "subscription_metrics")
-      
+
       # Schedule periodic updates
       :timer.send_interval(60_000, self(), :update_metrics)
     end
@@ -74,7 +73,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
     case format do
       "csv" ->
         csv_data = generate_csv_export(socket.assigns)
-        
+
         socket =
           socket
           |> put_flash(:info, "CSV export generated successfully")
@@ -103,7 +102,10 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
 
     socket
     |> assign(:revenue_metrics, get_revenue_metrics(date_range))
-    |> assign(:subscription_metrics, get_subscription_metrics(date_range, plan_filter, status_filter))
+    |> assign(
+      :subscription_metrics,
+      get_subscription_metrics(date_range, plan_filter, status_filter)
+    )
     |> assign(:churn_metrics, get_churn_metrics(date_range))
     |> assign(:growth_metrics, get_growth_metrics(date_range))
     |> assign(:recent_subscriptions, get_recent_subscriptions())
@@ -114,7 +116,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
 
   defp get_revenue_metrics(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       total_revenue: Billing.get_revenue_for_period(period),
       monthly_recurring_revenue: Billing.get_mrr(),
@@ -127,7 +129,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
   defp get_subscription_metrics(date_range, plan_filter, status_filter) do
     period = parse_date_range(date_range)
     filters = build_subscription_filters(plan_filter, status_filter)
-    
+
     %{
       total_subscriptions: Subscriptions.count_subscriptions(filters),
       active_subscriptions: Subscriptions.count_active_subscriptions(filters),
@@ -139,7 +141,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
 
   defp get_churn_metrics(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       churn_rate: Analytics.calculate_subscription_churn_rate(period),
       voluntary_churn: Subscriptions.get_voluntary_churn_rate(period),
@@ -151,7 +153,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
 
   defp get_growth_metrics(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       net_growth_rate: Subscriptions.calculate_net_growth_rate(period),
       expansion_revenue: Billing.get_expansion_revenue(period),
@@ -191,7 +193,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
 
   defp generate_csv_export(_assigns) do
     headers = ["Date", "Plan", "Status", "Revenue", "Subscriptions", "Churn Rate"]
-    
+
     # Generate sample data - in real implementation, this would pull actual data
     rows = [
       ["2024-01-01", "Basic", "Active", "$2,500", "100", "2.5%"],
@@ -199,7 +201,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
       ["2024-01-02", "Basic", "Active", "$2,600", "104", "2.3%"],
       ["2024-01-02", "Pro", "Active", "$4,680", "104", "1.7%"]
     ]
-    
+
     ([headers] ++ rows)
     |> Enum.map(&Enum.join(&1, ","))
     |> Enum.join("\n")
@@ -224,8 +226,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
                 phx-click="refresh_analytics"
                 class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" />
-                Refresh
+                <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" /> Refresh
               </button>
               <div class="relative">
                 <select
@@ -280,15 +281,14 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
                   phx-value-format="csv"
                   class="w-full inline-flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                 >
-                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" />
-                  Export CSV
+                  <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Export CSV
                 </button>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Revenue Metrics -->
+        
+    <!-- Revenue Metrics -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <.revenue_metric_card
             title="Total Revenue"
@@ -323,8 +323,8 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
             color="red"
           />
         </div>
-
-        <!-- Charts and Analytics -->
+        
+    <!-- Charts and Analytics -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <!-- Revenue Trends Chart -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -337,8 +337,8 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
               </div>
             </div>
           </div>
-
-          <!-- Plan Distribution -->
+          
+    <!-- Plan Distribution -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Plan Distribution</h3>
             <div class="space-y-4">
@@ -352,7 +352,8 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
                         "pro" -> "bg-purple-500"
                         _ -> "bg-gray-500"
                       end
-                    ]}></div>
+                    ]}>
+                    </div>
                     <span class="text-sm font-medium text-gray-900">
                       {String.capitalize(plan)} Plan
                     </span>
@@ -373,14 +374,15 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
                       end
                     ]}
                     style={"width: #{data.percentage}%"}
-                  ></div>
+                  >
+                  </div>
                 </div>
               <% end %>
             </div>
           </div>
         </div>
-
-        <!-- Subscription Metrics -->
+        
+    <!-- Subscription Metrics -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <!-- Subscription Stats -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -412,8 +414,8 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
               </div>
             </div>
           </div>
-
-          <!-- Churn Analysis -->
+          
+    <!-- Churn Analysis -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Churn Analysis</h3>
             <div class="space-y-4">
@@ -439,8 +441,8 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
               </div>
             </div>
           </div>
-
-          <!-- Growth Metrics -->
+          
+    <!-- Growth Metrics -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Growth Metrics</h3>
             <div class="space-y-4">
@@ -469,8 +471,8 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLive do
             </div>
           </div>
         </div>
-
-        <!-- Recent Subscriptions -->
+        
+    <!-- Recent Subscriptions -->
         <div class="bg-white rounded-lg shadow">
           <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-medium text-gray-900">Recent Subscriptions</h3>

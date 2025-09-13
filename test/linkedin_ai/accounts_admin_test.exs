@@ -37,10 +37,13 @@ defmodule LinkedinAi.AccountsAdminTest do
     test "list_admin_users/0 returns only active admin users" do
       admin1 = AccountsFixtures.admin_user_fixture(%{email: "admin1@test.com"})
       admin2 = AccountsFixtures.admin_user_fixture(%{email: "admin2@test.com"})
-      _suspended_admin = AccountsFixtures.admin_user_fixture(%{
-        email: "suspended@test.com", 
-        account_status: "suspended"
-      })
+
+      _suspended_admin =
+        AccountsFixtures.admin_user_fixture(%{
+          email: "suspended@test.com",
+          account_status: "suspended"
+        })
+
       _regular_user = AccountsFixtures.user_fixture()
 
       admin_users = Accounts.list_admin_users()
@@ -65,17 +68,17 @@ defmodule LinkedinAi.AccountsAdminTest do
 
     test "suspend_user/1 suspends a user account" do
       user = AccountsFixtures.user_fixture()
-      
+
       {:ok, suspended_user} = Accounts.suspend_user(user)
-      
+
       assert suspended_user.account_status == "suspended"
     end
 
     test "activate_user/1 activates a suspended user" do
       user = AccountsFixtures.user_fixture(%{account_status: "suspended"})
-      
+
       {:ok, active_user} = Accounts.activate_user(user)
-      
+
       assert active_user.account_status == "active"
     end
   end
@@ -83,7 +86,7 @@ defmodule LinkedinAi.AccountsAdminTest do
   describe "admin permissions" do
     test "can?/2 allows admin users to manage users" do
       admin_user = AccountsFixtures.admin_user_fixture()
-      
+
       assert Accounts.can?(admin_user, :manage_users)
       assert Accounts.can?(admin_user, :view_admin_panel)
       assert Accounts.can?(admin_user, :manage_subscriptions)
@@ -92,7 +95,7 @@ defmodule LinkedinAi.AccountsAdminTest do
 
     test "can?/2 denies regular users admin actions" do
       user = AccountsFixtures.user_fixture()
-      
+
       refute Accounts.can?(user, :manage_users)
       refute Accounts.can?(user, :view_admin_panel)
       refute Accounts.can?(user, :manage_subscriptions)
@@ -101,7 +104,7 @@ defmodule LinkedinAi.AccountsAdminTest do
 
     test "can?/2 allows active users to use platform features" do
       user = AccountsFixtures.user_fixture()
-      
+
       assert Accounts.can?(user, :generate_content)
       assert Accounts.can?(user, :analyze_profile)
     end
@@ -109,7 +112,7 @@ defmodule LinkedinAi.AccountsAdminTest do
     test "can?/2 returns false for unknown actions" do
       admin_user = AccountsFixtures.admin_user_fixture()
       user = AccountsFixtures.user_fixture()
-      
+
       refute Accounts.can?(admin_user, :unknown_action)
       refute Accounts.can?(user, :unknown_action)
     end

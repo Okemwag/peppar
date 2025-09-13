@@ -50,12 +50,12 @@ defmodule LinkedinAi.Accounts.User do
     field :trial_ends_at, :utc_datetime
     field :has_used_trial, :boolean, default: false
 
-    # Associations (will be enabled once schemas are created)
-    # has_one :subscription, LinkedinAi.Subscriptions.Subscription
-    # has_many :generated_contents, LinkedinAi.ContentGeneration.GeneratedContent
+    # Associations
+    has_one :subscription, LinkedinAi.Subscriptions.Subscription
+    has_many :generated_contents, LinkedinAi.ContentGeneration.GeneratedContent
     # has_many :profile_analyses, LinkedinAi.ProfileOptimization.ProfileAnalysis
     # has_many :content_templates, LinkedinAi.ContentGeneration.ContentTemplate
-    # has_many :usage_records, LinkedinAi.Subscriptions.UsageRecord
+    has_many :usage_records, LinkedinAi.Subscriptions.UsageRecord
 
     timestamps(type: :utc_datetime)
   end

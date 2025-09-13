@@ -13,25 +13,26 @@ defmodule LinkedinAiWeb.DashboardLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    socket = if connected?(socket) do
-      # Load dashboard data
-      user = socket.assigns.current_user
-      analytics = Analytics.get_user_analytics(user)
-      subscription = Billing.get_current_subscription(user)
-      linkedin_status = Social.get_connection_status(user)
+    socket =
+      if connected?(socket) do
+        # Load dashboard data
+        user = socket.assigns.current_user
+        analytics = Analytics.get_user_analytics(user)
+        subscription = Billing.get_current_subscription(user)
+        linkedin_status = Social.get_connection_status(user)
 
-      socket
-      |> assign(:analytics, analytics)
-      |> assign(:subscription, subscription)
-      |> assign(:linkedin_status, linkedin_status)
-      |> assign(:page_title, "Dashboard")
-    else
-      socket
-      |> assign(:analytics, nil)
-      |> assign(:subscription, nil)
-      |> assign(:linkedin_status, nil)
-      |> assign(:page_title, "Dashboard")
-    end
+        socket
+        |> assign(:analytics, analytics)
+        |> assign(:subscription, subscription)
+        |> assign(:linkedin_status, linkedin_status)
+        |> assign(:page_title, "Dashboard")
+      else
+        socket
+        |> assign(:analytics, nil)
+        |> assign(:subscription, nil)
+        |> assign(:linkedin_status, nil)
+        |> assign(:page_title, "Dashboard")
+      end
 
     {:ok, socket}
   end

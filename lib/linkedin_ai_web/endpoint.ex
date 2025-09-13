@@ -41,6 +41,11 @@ defmodule LinkedinAiWeb.Endpoint do
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
 
+  # Security plugs
+  plug LinkedinAiWeb.Plugs.SecurityContext
+  plug LinkedinAiWeb.Plugs.SecurityHeaders
+  plug LinkedinAiWeb.Plugs.CacheHeaders
+
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],

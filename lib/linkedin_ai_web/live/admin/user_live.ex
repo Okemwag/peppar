@@ -188,20 +188,22 @@ defmodule LinkedinAiWeb.Admin.UserLive do
 
   defp load_users(socket) do
     filters = build_filters(socket.assigns)
-    
-    users = Accounts.list_users_admin(
-      search: socket.assigns.search_query,
-      filters: filters,
-      sort_by: socket.assigns.sort_by,
-      sort_order: socket.assigns.sort_order,
-      page: socket.assigns.page,
-      per_page: socket.assigns.per_page
-    )
 
-    total_count = Accounts.count_users_admin(
-      search: socket.assigns.search_query,
-      filters: filters
-    )
+    users =
+      Accounts.list_users_admin(
+        search: socket.assigns.search_query,
+        filters: filters,
+        sort_by: socket.assigns.sort_by,
+        sort_order: socket.assigns.sort_order,
+        page: socket.assigns.page,
+        per_page: socket.assigns.per_page
+      )
+
+    total_count =
+      Accounts.count_users_admin(
+        search: socket.assigns.search_query,
+        filters: filters
+      )
 
     total_pages = ceil(total_count / socket.assigns.per_page)
 
@@ -261,8 +263,8 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                   />
                 </.form>
               </div>
-
-              <!-- Status Filter -->
+              
+    <!-- Status Filter -->
               <div>
                 <.form for={%{}} phx-change="filter">
                   <select
@@ -271,13 +273,15 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                   >
                     <option value="all" selected={@filter_status == "all"}>All Status</option>
                     <option value="active" selected={@filter_status == "active"}>Active</option>
-                    <option value="suspended" selected={@filter_status == "suspended"}>Suspended</option>
+                    <option value="suspended" selected={@filter_status == "suspended"}>
+                      Suspended
+                    </option>
                     <option value="pending" selected={@filter_status == "pending"}>Pending</option>
                   </select>
                 </.form>
               </div>
-
-              <!-- Role Filter -->
+              
+    <!-- Role Filter -->
               <div>
                 <.form for={%{}} phx-change="filter">
                   <select
@@ -293,8 +297,8 @@ defmodule LinkedinAiWeb.Admin.UserLive do
             </div>
           </div>
         </div>
-
-        <!-- Users Table -->
+        
+    <!-- Users Table -->
         <div class="bg-white rounded-lg shadow overflow-hidden">
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
@@ -307,7 +311,11 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                       class="flex items-center space-x-1 hover:text-gray-700"
                     >
                       <span>User</span>
-                      <.sort_icon sort_by="first_name" current_sort={@sort_by} current_order={@sort_order} />
+                      <.sort_icon
+                        sort_by="first_name"
+                        current_sort={@sort_by}
+                        current_order={@sort_order}
+                      />
                     </button>
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -326,7 +334,11 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                       class="flex items-center space-x-1 hover:text-gray-700"
                     >
                       <span>Joined</span>
-                      <.sort_icon sort_by="inserted_at" current_sort={@sort_by} current_order={@sort_order} />
+                      <.sort_icon
+                        sort_by="inserted_at"
+                        current_sort={@sort_by}
+                        current_order={@sort_order}
+                      />
                     </button>
                   </th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -408,8 +420,8 @@ defmodule LinkedinAiWeb.Admin.UserLive do
               </tbody>
             </table>
           </div>
-
-          <!-- Pagination -->
+          
+    <!-- Pagination -->
           <%= if @total_pages > 1 do %>
             <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
               <div class="flex items-center justify-between">
@@ -436,12 +448,9 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                 <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                   <div>
                     <p class="text-sm text-gray-700">
-                      Showing
-                      <span class="font-medium">{(@page - 1) * @per_page + 1}</span>
-                      to
-                      <span class="font-medium">{min(@page * @per_page, @total_count)}</span>
-                      of
-                      <span class="font-medium">{@total_count}</span>
+                      Showing <span class="font-medium">{(@page - 1) * @per_page + 1}</span>
+                      to <span class="font-medium">{min(@page * @per_page, @total_count)}</span>
+                      of <span class="font-medium">{@total_count}</span>
                       results
                     </p>
                   </div>
@@ -476,8 +485,8 @@ defmodule LinkedinAiWeb.Admin.UserLive do
           <% end %>
         </div>
       </div>
-
-      <!-- User Detail Modal -->
+      
+    <!-- User Detail Modal -->
       <%= if @show_user_modal && @selected_user do %>
         <.user_detail_modal user={@selected_user} />
       <% end %>
@@ -569,12 +578,23 @@ defmodule LinkedinAiWeb.Admin.UserLive do
       |> assign(:subscription, subscription)
 
     ~H"""
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div
+      class="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" phx-click="close_user_modal"></div>
-        
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          phx-click="close_user_modal"
+        >
+        </div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+          &#8203;
+        </span>
+
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
           <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div class="flex items-start justify-between mb-4">
@@ -589,7 +609,7 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                 <.icon name="hero-x-mark" class="h-6 w-6" />
               </button>
             </div>
-            
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <!-- User Information -->
               <div class="space-y-4">
@@ -620,15 +640,17 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                     <% end %>
                   </dl>
                 </div>
-
-                <!-- Subscription Information -->
+                
+    <!-- Subscription Information -->
                 <%= if @subscription do %>
                   <div>
                     <h4 class="text-sm font-medium text-gray-900 mb-2">Subscription</h4>
                     <dl class="space-y-2">
                       <div class="flex justify-between">
                         <dt class="text-sm text-gray-500">Plan:</dt>
-                        <dd class="text-sm text-gray-900">{String.capitalize(@subscription.plan_type)}</dd>
+                        <dd class="text-sm text-gray-900">
+                          {String.capitalize(@subscription.plan_type)}
+                        </dd>
                       </div>
                       <div class="flex justify-between">
                         <dt class="text-sm text-gray-500">Status:</dt>
@@ -637,15 +659,17 @@ defmodule LinkedinAiWeb.Admin.UserLive do
                       <%= if @subscription.current_period_end do %>
                         <div class="flex justify-between">
                           <dt class="text-sm text-gray-500">Next Billing:</dt>
-                          <dd class="text-sm text-gray-900">{format_date(@subscription.current_period_end)}</dd>
+                          <dd class="text-sm text-gray-900">
+                            {format_date(@subscription.current_period_end)}
+                          </dd>
                         </div>
                       <% end %>
                     </dl>
                   </div>
                 <% end %>
               </div>
-
-              <!-- Usage Analytics -->
+              
+    <!-- Usage Analytics -->
               <div class="space-y-4">
                 <div>
                   <h4 class="text-sm font-medium text-gray-900 mb-2">Usage Statistics</h4>
@@ -679,7 +703,7 @@ defmodule LinkedinAiWeb.Admin.UserLive do
               </div>
             </div>
           </div>
-          
+
           <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <%= if @user.account_status == "active" do %>
               <button
@@ -740,7 +764,15 @@ defmodule LinkedinAiWeb.Admin.UserLive do
         [1, 2, 3, 4, 5, "...", total_pages]
 
       current_page >= total_pages - 3 ->
-        [1, "...", total_pages - 4, total_pages - 3, total_pages - 2, total_pages - 1, total_pages]
+        [
+          1,
+          "...",
+          total_pages - 4,
+          total_pages - 3,
+          total_pages - 2,
+          total_pages - 1,
+          total_pages
+        ]
 
       true ->
         [1, "...", current_page - 1, current_page, current_page + 1, "...", total_pages]

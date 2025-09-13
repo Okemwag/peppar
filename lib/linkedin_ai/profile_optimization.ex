@@ -542,7 +542,7 @@ defmodule LinkedinAi.ProfileOptimization do
   """
   def count_profiles_analyzed_today do
     today = Date.utc_today()
-    
+
     from(pa in ProfileAnalysis,
       where: fragment("DATE(?)", pa.inserted_at) == ^today,
       select: count(pa.id)
@@ -585,8 +585,9 @@ defmodule LinkedinAi.ProfileOptimization do
 
   defp count_profiles_analyzed_for_period({start_date, end_date}) do
     from(pa in ProfileAnalysis,
-      where: fragment("DATE(?)", pa.inserted_at) >= ^start_date and
-             fragment("DATE(?)", pa.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", pa.inserted_at) >= ^start_date and
+          fragment("DATE(?)", pa.inserted_at) <= ^end_date,
       select: count(pa.id)
     )
     |> Repo.one()
@@ -594,8 +595,9 @@ defmodule LinkedinAi.ProfileOptimization do
 
   defp count_unique_users_for_period({start_date, end_date}) do
     from(pa in ProfileAnalysis,
-      where: fragment("DATE(?)", pa.inserted_at) >= ^start_date and
-             fragment("DATE(?)", pa.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", pa.inserted_at) >= ^start_date and
+          fragment("DATE(?)", pa.inserted_at) <= ^end_date,
       select: count(pa.user_id, :distinct)
     )
     |> Repo.one()
@@ -604,11 +606,24 @@ defmodule LinkedinAi.ProfileOptimization do
   defp calculate_avg_analyses_per_user({start_date, end_date}) do
     total_analyses = count_profiles_analyzed_for_period({start_date, end_date})
     unique_users = count_unique_users_for_period({start_date, end_date})
-    
+
     if unique_users > 0 do
       Float.round(total_analyses / unique_users, 1)
     else
       0.0
     end
+  end
+
+  ## Analytics Processing Functions
+
+  @doc """
+  Counts profile analyses for a specific date.
+  """
+  def count_analyses_for_date(date) do
+    from(pa in ProfileAnalysis,
+      where: fragment("DATE(?)", pa.inserted_at) == ^date,
+      select: count(pa.id)
+    )
+    |> Repo.one()
   end
 end

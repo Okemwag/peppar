@@ -512,8 +512,10 @@ defmodule LinkedinAi.Social.LinkedInClient do
       {:ok, %HTTPoison.Response{status_code: status}} when status in [200, 401] ->
         # 401 is expected without auth, but means API is reachable
         {:ok, :healthy}
+
       {:ok, %HTTPoison.Response{}} ->
         {:error, :unhealthy}
+
       {:error, _} ->
         {:error, :unhealthy}
     end

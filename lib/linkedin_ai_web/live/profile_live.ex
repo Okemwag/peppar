@@ -2,9 +2,9 @@ defmodule LinkedinAiWeb.ProfileLive do
   @moduledoc """
   Profile optimization LiveView for LinkedIn profile analysis and improvement.
   """
-  
+
   use LinkedinAiWeb, :live_view
-  
+
   alias LinkedinAi.ProfileOptimization
   alias LinkedinAi.ProfileOptimization.ProfileAnalysis
   alias LinkedinAi.Social
@@ -15,7 +15,7 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def mount(_params, _session, socket) do
     user = socket.assigns.current_user
-    
+
     socket =
       socket
       |> assign(:page_title, "Profile Optimization")
@@ -23,7 +23,7 @@ defmodule LinkedinAiWeb.ProfileLive do
       |> assign(:analyses, [])
       |> assign(:analyzing, false)
       |> assign(:selected_analysis, nil)
-    
+
     if connected?(socket) do
       analyses = ProfileOptimization.list_user_analyses(user, [])
       socket = assign(socket, :analyses, analyses)
@@ -43,24 +43,25 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def handle_event("sync_profile", _params, socket) do
     user = socket.assigns.current_user
-    
+
     case Social.sync_profile_data(user) do
       {:ok, _updated_user} ->
         linkedin_status = Social.get_connection_status(user)
-        
+
         socket =
           socket
           |> assign(:linkedin_status, linkedin_status)
           |> put_flash(:info, "LinkedIn profile synced successfully")
-        
+
         {:noreply, socket}
-      
+
       {:error, reason} ->
-        message = case reason do
-          :not_connected_or_expired -> "LinkedIn account not connected or token expired"
-          _ -> "Failed to sync LinkedIn profile"
-        end
-        
+        message =
+          case reason do
+            :not_connected_or_expired -> "LinkedIn account not connected or token expired"
+            _ -> "Failed to sync LinkedIn profile"
+          end
+
         socket = put_flash(socket, :error, message)
         {:noreply, socket}
     end
@@ -69,17 +70,23 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def handle_event("analyze_profile", %{"type" => analysis_type}, socket) do
     user = socket.assigns.current_user
-    
+
     # Check usage limits
     if Subscriptions.usage_limit_exceeded?(user, "profile_analysis") do
-      socket = put_flash(socket, :error, "You've reached your monthly profile analysis limit. Please upgrade your plan.")
+      socket =
+        put_flash(
+          socket,
+          :error,
+          "You've reached your monthly profile analysis limit. Please upgrade your plan."
+        )
+
       {:noreply, socket}
     else
       socket = assign(socket, :analyzing, true)
-      
+
       # Start analysis asynchronously
       send(self(), {:analyze_profile, analysis_type})
-      
+
       {:noreply, socket}
     end
   end
@@ -87,11 +94,11 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def handle_event("view_analysis", %{"id" => id}, socket) do
     user = socket.assigns.current_user
-    
+
     case ProfileOptimization.get_user_analysis(user, id) do
       nil ->
         {:noreply, put_flash(socket, :error, "Analysis not found")}
-      
+
       analysis ->
         socket = assign(socket, :selected_analysis, analysis)
         {:noreply, socket}
@@ -107,23 +114,23 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def handle_event("mark_implemented", %{"id" => id}, socket) do
     user = socket.assigns.current_user
-    
+
     case ProfileOptimization.get_user_analysis(user, id) do
       nil ->
         {:noreply, put_flash(socket, :error, "Analysis not found")}
-      
+
       analysis ->
         case ProfileOptimization.mark_as_implemented(analysis) do
           {:ok, _updated_analysis} ->
             analyses = ProfileOptimization.list_user_analyses(user, [])
-            
+
             socket =
               socket
               |> assign(:analyses, analyses)
               |> put_flash(:info, "Marked as implemented")
-            
+
             {:noreply, socket}
-          
+
           {:error, _changeset} ->
             {:noreply, put_flash(socket, :error, "Failed to update analysis")}
         end
@@ -133,23 +140,23 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def handle_event("dismiss_analysis", %{"id" => id}, socket) do
     user = socket.assigns.current_user
-    
+
     case ProfileOptimization.get_user_analysis(user, id) do
       nil ->
         {:noreply, put_flash(socket, :error, "Analysis not found")}
-      
+
       analysis ->
         case ProfileOptimization.dismiss_analysis(analysis) do
           {:ok, _updated_analysis} ->
             analyses = ProfileOptimization.list_user_analyses(user, [])
-            
+
             socket =
               socket
               |> assign(:analyses, analyses)
               |> put_flash(:info, "Analysis dismissed")
-            
+
             {:noreply, socket}
-          
+
           {:error, _changeset} ->
             {:noreply, put_flash(socket, :error, "Failed to dismiss analysis")}
         end
@@ -159,45 +166,46 @@ defmodule LinkedinAiWeb.ProfileLive do
   @impl true
   def handle_info({:analyze_profile, analysis_type}, socket) do
     user = socket.assigns.current_user
-    
+
     case ProfileOptimization.analyze_profile(user, analysis_type) do
       {:ok, _analysis} ->
         analyses = ProfileOptimization.list_user_analyses(user, [])
-        
+
         socket =
           socket
           |> assign(:analyzing, false)
           |> assign(:analyses, analyses)
           |> put_flash(:info, "Profile analysis completed successfully!")
-        
+
         {:noreply, socket}
-      
+
       {:error, :usage_limit_exceeded} ->
         socket =
           socket
           |> assign(:analyzing, false)
           |> put_flash(:error, "You've reached your monthly analysis limit")
-        
+
         {:noreply, socket}
-      
+
       {:error, :not_connected_or_expired} ->
         socket =
           socket
           |> assign(:analyzing, false)
           |> put_flash(:error, "Please connect your LinkedIn account first")
-        
+
         {:noreply, socket}
-      
+
       {:error, _reason} ->
         socket =
           socket
           |> assign(:analyzing, false)
           |> put_flash(:error, "Failed to analyze profile. Please try again.")
-        
+
         {:noreply, socket}
     end
-  end  
-@impl true
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-7xl mx-auto">
@@ -215,28 +223,28 @@ defmodule LinkedinAiWeb.ProfileLive do
           <div class="lg:col-span-2 space-y-8">
             <!-- Profile Overview -->
             <.profile_overview_card linkedin_status={@linkedin_status} />
-
-            <!-- Analysis Actions -->
+            
+    <!-- Analysis Actions -->
             <.analysis_actions_card analyzing={@analyzing} />
-
-            <!-- Analysis History -->
+            
+    <!-- Analysis History -->
             <.analysis_history_card analyses={@analyses} />
           </div>
-
-          <!-- Sidebar -->
+          
+    <!-- Sidebar -->
           <div class="space-y-6">
             <!-- LinkedIn Status -->
             <.linkedin_connection_card linkedin_status={@linkedin_status} />
-
-            <!-- Usage Stats -->
+            
+    <!-- Usage Stats -->
             <.analysis_usage_card current_user={@current_user} />
-
-            <!-- Quick Tips -->
+            
+    <!-- Quick Tips -->
             <.optimization_tips_card />
           </div>
         </div>
-
-        <!-- Analysis Detail Modal -->
+        
+    <!-- Analysis Detail Modal -->
         <%= if @selected_analysis do %>
           <.analysis_detail_modal analysis={@selected_analysis} />
         <% end %>
@@ -254,7 +262,7 @@ defmodule LinkedinAiWeb.ProfileLive do
     <div class="text-center py-12">
       <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-blue-100">
         <svg class="w-12 h-12 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
         </svg>
       </div>
       <h2 class="mt-6 text-2xl font-bold text-gray-900">Connect Your LinkedIn Account</h2>
@@ -267,7 +275,7 @@ defmodule LinkedinAiWeb.ProfileLive do
           class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
           </svg>
           Connect LinkedIn Account
         </button>
@@ -289,8 +297,7 @@ defmodule LinkedinAiWeb.ProfileLive do
           phx-click="sync_profile"
           class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
-          <.icon name="hero-arrow-path" class="h-4 w-4 mr-2" />
-          Sync Profile
+          <.icon name="hero-arrow-path" class="h-4 w-4 mr-2" /> Sync Profile
         </button>
       </div>
 
@@ -302,7 +309,10 @@ defmodule LinkedinAiWeb.ProfileLive do
               <span class="text-sm text-gray-700">Connection Status:</span>
               <span class={[
                 "ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                if(@linkedin_status.connected, do: "bg-green-100 text-green-800", else: "bg-red-100 text-red-800")
+                if(@linkedin_status.connected,
+                  do: "bg-green-100 text-green-800",
+                  else: "bg-red-100 text-red-800"
+                )
               ]}>
                 {if @linkedin_status.connected, do: "Connected", else: "Disconnected"}
               </span>
@@ -343,7 +353,7 @@ defmodule LinkedinAiWeb.ProfileLive do
     ~H"""
     <div class="bg-white shadow rounded-lg p-6">
       <h2 class="text-lg font-medium text-gray-900 mb-6">Profile Analysis</h2>
-      
+
       <%= if @analyzing do %>
         <div class="text-center py-8">
           <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-blue-500 bg-blue-100">
@@ -400,7 +410,10 @@ defmodule LinkedinAiWeb.ProfileLive do
           {@description}
         </p>
       </div>
-      <span class="pointer-events-none absolute top-6 right-6 text-gray-300 group-hover:text-gray-400" aria-hidden="true">
+      <span
+        class="pointer-events-none absolute top-6 right-6 text-gray-300 group-hover:text-gray-400"
+        aria-hidden="true"
+      >
         <.icon name="hero-arrow-top-right-on-square" class="h-6 w-6" />
       </span>
     </button>
@@ -412,7 +425,7 @@ defmodule LinkedinAiWeb.ProfileLive do
     ~H"""
     <div class="bg-white shadow rounded-lg p-6">
       <h2 class="text-lg font-medium text-gray-900 mb-6">Analysis History</h2>
-      
+
       <%= if Enum.empty?(@analyses) do %>
         <div class="text-center py-8">
           <.icon name="hero-chart-bar" class="mx-auto h-12 w-12 text-gray-400" />
@@ -434,7 +447,7 @@ defmodule LinkedinAiWeb.ProfileLive do
   defp analysis_item(assigns) do
     {status_text, status_color} = ProfileAnalysis.status_display(assigns.analysis)
     {priority_text, priority_color} = ProfileAnalysis.priority_display(assigns.analysis)
-    
+
     assigns = assign(assigns, :status_text, status_text)
     assigns = assign(assigns, :status_color, status_color)
     assigns = assign(assigns, :priority_text, priority_text)
@@ -446,7 +459,9 @@ defmodule LinkedinAiWeb.ProfileLive do
         <div class="flex-shrink-0">
           <div class={[
             "w-10 h-10 rounded-full flex items-center justify-center",
-            ProfileAnalysis.score_color(@analysis) |> String.replace("text-", "bg-") |> String.replace("-600", "-100")
+            ProfileAnalysis.score_color(@analysis)
+            |> String.replace("text-", "bg-")
+            |> String.replace("-600", "-100")
           ]}>
             <span class={["text-sm font-medium", ProfileAnalysis.score_color(@analysis)]}>
               {ProfileAnalysis.score_grade(@analysis)}
@@ -470,7 +485,7 @@ defmodule LinkedinAiWeb.ProfileLive do
           </div>
         </div>
       </div>
-      
+
       <div class="flex items-center space-x-2">
         <button
           phx-click="view_analysis"
@@ -505,12 +520,12 @@ defmodule LinkedinAiWeb.ProfileLive do
     ~H"""
     <div class="bg-white shadow rounded-lg p-6">
       <h3 class="text-lg font-medium text-gray-900 mb-4">LinkedIn Connection</h3>
-      
+
       <div class="flex items-center space-x-3 mb-4">
         <div class="flex-shrink-0">
           <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
             <svg class="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
             </svg>
           </div>
         </div>
@@ -545,8 +560,7 @@ defmodule LinkedinAiWeb.ProfileLive do
         phx-click="sync_profile"
         class="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
-        <.icon name="hero-arrow-path" class="h-4 w-4 mr-2" />
-        Sync Profile Data
+        <.icon name="hero-arrow-path" class="h-4 w-4 mr-2" /> Sync Profile Data
       </button>
     </div>
     """
@@ -557,7 +571,7 @@ defmodule LinkedinAiWeb.ProfileLive do
     current_usage = Subscriptions.get_current_usage(assigns.current_user, "profile_analysis")
     limit = get_analysis_limit(assigns.current_user)
     percentage = if limit > 0, do: min(100, current_usage / limit * 100), else: 0
-    
+
     assigns = assign(assigns, :current_usage, current_usage)
     assigns = assign(assigns, :limit, limit)
     assigns = assign(assigns, :percentage, percentage)
@@ -565,20 +579,28 @@ defmodule LinkedinAiWeb.ProfileLive do
     ~H"""
     <div class="bg-white shadow rounded-lg p-6">
       <h3 class="text-lg font-medium text-gray-900 mb-4">Monthly Usage</h3>
-      
+
       <div class="space-y-4">
         <div>
           <div class="flex justify-between text-sm mb-2">
             <span class="text-gray-700">Profile Analysis</span>
             <span class="text-gray-500">
-              {@current_usage}<%= if @limit > 0 do %>/{@limit}<% else %>/∞<% end %>
+              {@current_usage}
+              <%= if @limit > 0 do %>
+                /{@limit}
+              <% else %>
+                /∞
+              <% end %>
             </span>
           </div>
           <div class="bg-gray-200 rounded-full h-2">
             <div
               class={[
                 "h-2 rounded-full transition-all duration-300",
-                if(@percentage >= 90, do: "bg-red-500", else: if(@percentage >= 70, do: "bg-yellow-500", else: "bg-green-500"))
+                if(@percentage >= 90,
+                  do: "bg-red-500",
+                  else: if(@percentage >= 70, do: "bg-yellow-500", else: "bg-green-500")
+                )
               ]}
               style={"width: #{@percentage}%"}
             >
@@ -613,7 +635,7 @@ defmodule LinkedinAiWeb.ProfileLive do
     ~H"""
     <div class="bg-white shadow rounded-lg p-6">
       <h3 class="text-lg font-medium text-gray-900 mb-4">Optimization Tips</h3>
-      
+
       <div class="space-y-4">
         <div class="flex items-start space-x-3">
           <div class="flex-shrink-0">
@@ -623,10 +645,12 @@ defmodule LinkedinAiWeb.ProfileLive do
           </div>
           <div>
             <p class="text-sm font-medium text-gray-900">Keep it updated</p>
-            <p class="text-sm text-gray-500">Regularly sync your profile to get the latest analysis.</p>
+            <p class="text-sm text-gray-500">
+              Regularly sync your profile to get the latest analysis.
+            </p>
           </div>
         </div>
-        
+
         <div class="flex items-start space-x-3">
           <div class="flex-shrink-0">
             <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
@@ -635,10 +659,12 @@ defmodule LinkedinAiWeb.ProfileLive do
           </div>
           <div>
             <p class="text-sm font-medium text-gray-900">Act on suggestions</p>
-            <p class="text-sm text-gray-500">Implement the AI recommendations to improve your profile score.</p>
+            <p class="text-sm text-gray-500">
+              Implement the AI recommendations to improve your profile score.
+            </p>
           </div>
         </div>
-        
+
         <div class="flex items-start space-x-3">
           <div class="flex-shrink-0">
             <div class="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
@@ -647,7 +673,9 @@ defmodule LinkedinAiWeb.ProfileLive do
           </div>
           <div>
             <p class="text-sm font-medium text-gray-900">Monitor progress</p>
-            <p class="text-sm text-gray-500">Re-analyze after making changes to track improvements.</p>
+            <p class="text-sm text-gray-500">
+              Re-analyze after making changes to track improvements.
+            </p>
           </div>
         </div>
       </div>
@@ -666,12 +694,23 @@ defmodule LinkedinAiWeb.ProfileLive do
   # Component: Analysis Detail Modal
   defp analysis_detail_modal(assigns) do
     ~H"""
-    <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div
+      class="fixed inset-0 z-50 overflow-y-auto"
+      aria-labelledby="modal-title"
+      role="dialog"
+      aria-modal="true"
+    >
       <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" phx-click="close_analysis"></div>
-        
-        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        
+        <div
+          class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+          phx-click="close_analysis"
+        >
+        </div>
+
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+          &#8203;
+        </span>
+
         <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
           <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
             <div class="flex items-start justify-between mb-4">
@@ -686,13 +725,13 @@ defmodule LinkedinAiWeb.ProfileLive do
                 <.icon name="hero-x-mark" class="h-6 w-6" />
               </button>
             </div>
-            
+
             <div class="space-y-6">
               <div class="bg-gray-50 rounded-lg p-4">
                 <h4 class="text-sm font-medium text-gray-900 mb-2">Analysis Summary</h4>
                 <p class="text-sm text-gray-700">{@analysis.summary}</p>
               </div>
-              
+
               <div>
                 <h4 class="text-sm font-medium text-gray-900 mb-2">Recommendations</h4>
                 <div class="space-y-2">
@@ -705,7 +744,7 @@ defmodule LinkedinAiWeb.ProfileLive do
               </div>
             </div>
           </div>
-          
+
           <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
             <button
               phx-click="mark_implemented"
@@ -737,7 +776,8 @@ defmodule LinkedinAiWeb.ProfileLive do
   defp get_analysis_limit(user) do
     case Billing.get_current_subscription(user) do
       %{plan_type: "basic"} -> 1
-      %{plan_type: "pro"} -> -1  # unlimited
+      # unlimited
+      %{plan_type: "pro"} -> -1
       _ -> if User.in_trial?(user), do: 1, else: 0
     end
   end

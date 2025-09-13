@@ -440,8 +440,9 @@ defmodule LinkedinAi.Billing do
     # For now, return a calculated value based on active subscriptions
     basic_count = count_subscriptions_by_plan("basic")
     pro_count = count_subscriptions_by_plan("pro")
-    
-    (basic_count * 2500) + (pro_count * 4500) # amounts in cents
+
+    # amounts in cents
+    basic_count * 2500 + pro_count * 4500
   end
 
   @doc """
@@ -458,7 +459,7 @@ defmodule LinkedinAi.Billing do
   """
   def count_active_subscriptions do
     import Ecto.Query
-    
+
     from(s in Subscription,
       where: s.status in ["active", "trialing"],
       select: count(s.id)
@@ -471,17 +472,21 @@ defmodule LinkedinAi.Billing do
   """
   def calculate_conversion_rate do
     import Ecto.Query
-    
-    total_trials = from(s in Subscription,
-      where: s.status == "trialing" or s.previous_status == "trialing",
-      select: count(s.id)
-    ) |> LinkedinAi.Repo.one()
-    
-    converted_trials = from(s in Subscription,
-      where: s.status == "active" and s.previous_status == "trialing",
-      select: count(s.id)
-    ) |> LinkedinAi.Repo.one()
-    
+
+    total_trials =
+      from(s in Subscription,
+        where: s.status == "trialing" or s.previous_status == "trialing",
+        select: count(s.id)
+      )
+      |> LinkedinAi.Repo.one()
+
+    converted_trials =
+      from(s in Subscription,
+        where: s.status == "active" and s.previous_status == "trialing",
+        select: count(s.id)
+      )
+      |> LinkedinAi.Repo.one()
+
     if total_trials > 0 do
       Float.round(converted_trials / total_trials * 100, 1)
     else
@@ -494,7 +499,7 @@ defmodule LinkedinAi.Billing do
   """
   def list_recent_subscriptions(limit \\ 10) do
     import Ecto.Query
-    
+
     from(s in Subscription,
       order_by: [desc: s.inserted_at],
       limit: ^limit,
@@ -505,7 +510,7 @@ defmodule LinkedinAi.Billing do
 
   defp count_subscriptions_by_plan(plan_type) do
     import Ecto.Query
-    
+
     from(s in Subscription,
       where: s.plan_type == ^plan_type and s.status in ["active", "trialing"],
       select: count(s.id)
@@ -520,11 +525,12 @@ defmodule LinkedinAi.Billing do
   """
   def get_revenue_for_period({start_date, end_date}) do
     import Ecto.Query
-    
+
     from(s in Subscription,
-      where: s.status in ["active", "trialing"] and
-             fragment("DATE(?)", s.inserted_at) >= ^start_date and
-             fragment("DATE(?)", s.inserted_at) <= ^end_date,
+      where:
+        s.status in ["active", "trialing"] and
+          fragment("DATE(?)", s.inserted_at) >= ^start_date and
+          fragment("DATE(?)", s.inserted_at) <= ^end_date,
       select: sum(s.amount)
     )
     |> LinkedinAi.Repo.one() || 0
@@ -535,7 +541,7 @@ defmodule LinkedinAi.Billing do
   """
   def get_mrr do
     import Ecto.Query
-    
+
     from(s in Subscription,
       where: s.status in ["active", "trialing"],
       select: sum(s.amount)
@@ -548,14 +554,16 @@ defmodule LinkedinAi.Billing do
   """
   def get_arpu do
     import Ecto.Query
-    
-    active_subscriptions = from(s in Subscription,
-      where: s.status in ["active", "trialing"],
-      select: count(s.id)
-    ) |> LinkedinAi.Repo.one()
-    
+
+    active_subscriptions =
+      from(s in Subscription,
+        where: s.status in ["active", "trialing"],
+        select: count(s.id)
+      )
+      |> LinkedinAi.Repo.one()
+
     total_revenue = get_mrr()
-    
+
     if active_subscriptions > 0 do
       Float.round(total_revenue / active_subscriptions / 100, 2)
     else
@@ -568,13 +576,13 @@ defmodule LinkedinAi.Billing do
   """
   def get_revenue_growth_rate({start_date, end_date}) do
     current_revenue = get_revenue_for_period({start_date, end_date})
-    
+
     # Calculate previous period
     days_diff = Date.diff(end_date, start_date)
     prev_start = Date.add(start_date, -days_diff)
     prev_end = Date.add(end_date, -days_diff)
     previous_revenue = get_revenue_for_period({prev_start, prev_end})
-    
+
     if previous_revenue > 0 do
       Float.round((current_revenue - previous_revenue) / previous_revenue * 100, 1)
     else
@@ -614,7 +622,7 @@ defmodule LinkedinAi.Billing do
     # Simplified LTV calculation: ARPU / churn_rate
     # Using a placeholder churn rate of 5%
     churn_rate = 0.05
-    
+
     if churn_rate > 0 do
       Float.round(arpu / churn_rate, 2)
     else
@@ -637,12 +645,14 @@ defmodule LinkedinAi.Billing do
   def get_revenue_trends({start_date, end_date}) do
     # Generate sample trend data
     days = Date.diff(end_date, start_date)
-    
+
     for i <- 0..min(days, 30) do
       date = Date.add(start_date, i)
+
       %{
         date: date,
-        revenue: :rand.uniform(5000) + 2000, # Sample data
+        # Sample data
+        revenue: :rand.uniform(5000) + 2000,
         subscriptions: :rand.uniform(50) + 20
       }
     end

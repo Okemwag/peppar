@@ -8,7 +8,15 @@ config :linkedin_ai, LinkedinAi.Repo,
   database: "linkedin_ai_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  pool_size: 15,
+  queue_target: 5000,
+  queue_interval: 5000,
+  timeout: 15_000,
+  ownership_timeout: 10_000,
+  prepare: :named,
+  parameters: [
+    plan_cache_mode: "force_custom_plan"
+  ]
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
@@ -108,3 +116,11 @@ config :ex_aws,
 
 # Configure Oban for development
 config :linkedin_ai, Oban, testing: :inline
+
+# Cache configuration for development
+config :linkedin_ai,
+  enable_cache: true,
+  enable_redis: false,
+  cdn_host: nil,
+  file_cdn_host: nil,
+  asset_version: "dev"

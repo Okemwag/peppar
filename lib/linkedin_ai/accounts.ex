@@ -60,6 +60,20 @@ defmodule LinkedinAi.Accounts do
   """
   def get_user!(id), do: Repo.get!(User, id)
 
+  @doc """
+  Gets a single user.
+
+  ## Examples
+
+      iex> get_user(123)
+      %User{}
+
+      iex> get_user(456)
+      nil
+
+  """
+  def get_user(id), do: Repo.get(User, id)
+
   ## User registration
 
   @doc """
@@ -776,7 +790,7 @@ defmodule LinkedinAi.Accounts do
   """
   def count_active_users_today do
     today = Date.utc_today()
-    
+
     from(u in User,
       where: fragment("DATE(?)", u.last_login_at) == ^today,
       select: count(u.id)
@@ -789,7 +803,7 @@ defmodule LinkedinAi.Accounts do
   """
   def count_new_users_this_week do
     week_ago = Date.add(Date.utc_today(), -7)
-    
+
     from(u in User,
       where: fragment("DATE(?)", u.inserted_at) >= ^week_ago,
       select: count(u.id)
@@ -915,10 +929,48 @@ defmodule LinkedinAi.Accounts do
   """
   def count_new_users_for_period({start_date, end_date}) do
     from(u in User,
-      where: fragment("DATE(?)", u.inserted_at) >= ^start_date and
-             fragment("DATE(?)", u.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", u.inserted_at) >= ^start_date and
+          fragment("DATE(?)", u.inserted_at) <= ^end_date,
       select: count(u.id)
     )
     |> Repo.one()
+  end
+
+  ## Analytics Processing Functions
+
+  @doc """
+  Counts new users for a specific date.
+  """
+  def count_new_users_for_date(date) do
+    from(u in User,
+      where: fragment("DATE(?)", u.inserted_at) == ^date,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Counts active users for a specific date.
+  """
+  def count_active_users_for_date(date) do
+    from(u in User,
+      where: fragment("DATE(?)", u.last_login_at) == ^date,
+      select: count(u.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Lists active users for a specific date.
+  """
+  def list_active_users_for_date(date) do
+    from(u in User,
+      where:
+        fragment("DATE(?)", u.last_login_at) == ^date or
+          fragment("DATE(?)", u.updated_at) == ^date,
+      select: u
+    )
+    |> Repo.all()
   end
 end

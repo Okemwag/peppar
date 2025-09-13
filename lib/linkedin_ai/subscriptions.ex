@@ -421,7 +421,7 @@ defmodule LinkedinAi.Subscriptions do
   """
   def count_subscriptions(filters \\ %{}) do
     query = from(s in Subscription, select: count(s.id))
-    
+
     query
     |> apply_count_filters(filters)
     |> Repo.one()
@@ -431,11 +431,12 @@ defmodule LinkedinAi.Subscriptions do
   Counts active subscriptions with optional filters.
   """
   def count_active_subscriptions(filters \\ %{}) do
-    query = from(s in Subscription, 
-      where: s.status in ["active", "trialing"],
-      select: count(s.id)
-    )
-    
+    query =
+      from(s in Subscription,
+        where: s.status in ["active", "trialing"],
+        select: count(s.id)
+      )
+
     query
     |> apply_count_filters(filters)
     |> Repo.one()
@@ -445,12 +446,14 @@ defmodule LinkedinAi.Subscriptions do
   Counts new subscriptions for a period.
   """
   def count_new_subscriptions({start_date, end_date}, filters \\ %{}) do
-    query = from(s in Subscription,
-      where: fragment("DATE(?)", s.inserted_at) >= ^start_date and
-             fragment("DATE(?)", s.inserted_at) <= ^end_date,
-      select: count(s.id)
-    )
-    
+    query =
+      from(s in Subscription,
+        where:
+          fragment("DATE(?)", s.inserted_at) >= ^start_date and
+            fragment("DATE(?)", s.inserted_at) <= ^end_date,
+        select: count(s.id)
+      )
+
     query
     |> apply_count_filters(filters)
     |> Repo.one()
@@ -460,13 +463,15 @@ defmodule LinkedinAi.Subscriptions do
   Counts canceled subscriptions for a period.
   """
   def count_canceled_subscriptions({start_date, end_date}, filters \\ %{}) do
-    query = from(s in Subscription,
-      where: s.status == "canceled" and
-             fragment("DATE(?)", s.canceled_at) >= ^start_date and
-             fragment("DATE(?)", s.canceled_at) <= ^end_date,
-      select: count(s.id)
-    )
-    
+    query =
+      from(s in Subscription,
+        where:
+          s.status == "canceled" and
+            fragment("DATE(?)", s.canceled_at) >= ^start_date and
+            fragment("DATE(?)", s.canceled_at) <= ^end_date,
+        select: count(s.id)
+      )
+
     query
     |> apply_count_filters(filters)
     |> Repo.one()
@@ -476,14 +481,16 @@ defmodule LinkedinAi.Subscriptions do
   Counts trial conversions for a period.
   """
   def count_trial_conversions({start_date, end_date}, filters \\ %{}) do
-    query = from(s in Subscription,
-      where: s.status == "active" and
-             s.previous_status == "trialing" and
-             fragment("DATE(?)", s.updated_at) >= ^start_date and
-             fragment("DATE(?)", s.updated_at) <= ^end_date,
-      select: count(s.id)
-    )
-    
+    query =
+      from(s in Subscription,
+        where:
+          s.status == "active" and
+            s.previous_status == "trialing" and
+            fragment("DATE(?)", s.updated_at) >= ^start_date and
+            fragment("DATE(?)", s.updated_at) <= ^end_date,
+        select: count(s.id)
+      )
+
     query
     |> apply_count_filters(filters)
     |> Repo.one()
@@ -493,19 +500,24 @@ defmodule LinkedinAi.Subscriptions do
   Gets voluntary churn rate (user-initiated cancellations).
   """
   def get_voluntary_churn_rate({start_date, end_date}) do
-    total_active = from(s in Subscription,
-      where: s.status in ["active", "trialing"],
-      select: count(s.id)
-    ) |> Repo.one()
-    
-    voluntary_cancellations = from(s in Subscription,
-      where: s.status == "canceled" and
-             s.cancellation_reason != "payment_failed" and
-             fragment("DATE(?)", s.canceled_at) >= ^start_date and
-             fragment("DATE(?)", s.canceled_at) <= ^end_date,
-      select: count(s.id)
-    ) |> Repo.one()
-    
+    total_active =
+      from(s in Subscription,
+        where: s.status in ["active", "trialing"],
+        select: count(s.id)
+      )
+      |> Repo.one()
+
+    voluntary_cancellations =
+      from(s in Subscription,
+        where:
+          s.status == "canceled" and
+            s.cancellation_reason != "payment_failed" and
+            fragment("DATE(?)", s.canceled_at) >= ^start_date and
+            fragment("DATE(?)", s.canceled_at) <= ^end_date,
+        select: count(s.id)
+      )
+      |> Repo.one()
+
     if total_active > 0 do
       Float.round(voluntary_cancellations / total_active * 100, 1)
     else
@@ -517,19 +529,24 @@ defmodule LinkedinAi.Subscriptions do
   Gets involuntary churn rate (payment failures).
   """
   def get_involuntary_churn_rate({start_date, end_date}) do
-    total_active = from(s in Subscription,
-      where: s.status in ["active", "trialing"],
-      select: count(s.id)
-    ) |> Repo.one()
-    
-    involuntary_cancellations = from(s in Subscription,
-      where: s.status == "canceled" and
-             s.cancellation_reason == "payment_failed" and
-             fragment("DATE(?)", s.canceled_at) >= ^start_date and
-             fragment("DATE(?)", s.canceled_at) <= ^end_date,
-      select: count(s.id)
-    ) |> Repo.one()
-    
+    total_active =
+      from(s in Subscription,
+        where: s.status in ["active", "trialing"],
+        select: count(s.id)
+      )
+      |> Repo.one()
+
+    involuntary_cancellations =
+      from(s in Subscription,
+        where:
+          s.status == "canceled" and
+            s.cancellation_reason == "payment_failed" and
+            fragment("DATE(?)", s.canceled_at) >= ^start_date and
+            fragment("DATE(?)", s.canceled_at) <= ^end_date,
+        select: count(s.id)
+      )
+      |> Repo.one()
+
     if total_active > 0 do
       Float.round(involuntary_cancellations / total_active * 100, 1)
     else
@@ -542,9 +559,10 @@ defmodule LinkedinAi.Subscriptions do
   """
   def get_churn_reasons({start_date, end_date}) do
     from(s in Subscription,
-      where: s.status == "canceled" and
-             fragment("DATE(?)", s.canceled_at) >= ^start_date and
-             fragment("DATE(?)", s.canceled_at) <= ^end_date,
+      where:
+        s.status == "canceled" and
+          fragment("DATE(?)", s.canceled_at) >= ^start_date and
+          fragment("DATE(?)", s.canceled_at) <= ^end_date,
       group_by: s.cancellation_reason,
       select: {s.cancellation_reason, count(s.id)}
     )
@@ -570,7 +588,7 @@ defmodule LinkedinAi.Subscriptions do
     new_subs = count_new_subscriptions({start_date, end_date})
     canceled_subs = count_canceled_subscriptions({start_date, end_date})
     total_active = count_active_subscriptions()
-    
+
     if total_active > 0 do
       Float.round((new_subs - canceled_subs) / total_active * 100, 1)
     else
@@ -583,23 +601,25 @@ defmodule LinkedinAi.Subscriptions do
   """
   def get_plan_distribution do
     total_subscriptions = count_active_subscriptions()
-    
-    plan_counts = from(s in Subscription,
-      where: s.status in ["active", "trialing"],
-      group_by: s.plan_type,
-      select: {s.plan_type, count(s.id)}
-    )
-    |> Repo.all()
-    |> Enum.into(%{})
-    
+
+    plan_counts =
+      from(s in Subscription,
+        where: s.status in ["active", "trialing"],
+        group_by: s.plan_type,
+        select: {s.plan_type, count(s.id)}
+      )
+      |> Repo.all()
+      |> Enum.into(%{})
+
     plan_counts
     |> Enum.map(fn {plan, count} ->
-      percentage = if total_subscriptions > 0 do
-        Float.round(count / total_subscriptions * 100, 1)
-      else
-        0.0
-      end
-      
+      percentage =
+        if total_subscriptions > 0 do
+          Float.round(count / total_subscriptions * 100, 1)
+        else
+          0.0
+        end
+
       {plan, %{count: count, percentage: percentage}}
     end)
     |> Enum.into(%{})
@@ -639,5 +659,31 @@ defmodule LinkedinAi.Subscriptions do
         _ -> acc
       end
     end)
+  end
+
+  ## Analytics Processing Functions
+
+  @doc """
+  Counts new subscriptions for a specific date.
+  """
+  def count_new_subscriptions_for_date(date) do
+    from(s in Subscription,
+      where: fragment("DATE(?)", s.inserted_at) == ^date,
+      select: count(s.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Counts canceled subscriptions for a specific date.
+  """
+  def count_canceled_subscriptions_for_date(date) do
+    from(s in Subscription,
+      where:
+        s.status == "canceled" and
+          fragment("DATE(?)", s.canceled_at) == ^date,
+      select: count(s.id)
+    )
+    |> Repo.one()
   end
 end

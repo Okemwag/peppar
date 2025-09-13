@@ -7,11 +7,18 @@ defmodule LinkedinAiWeb.Admin.UserLiveTest do
   describe "Admin User Management" do
     setup do
       admin_user = admin_user_fixture()
+
       users = [
         user_fixture(%{first_name: "John", last_name: "Doe", email: "john@example.com"}),
         user_fixture(%{first_name: "Jane", last_name: "Smith", email: "jane@example.com"}),
-        user_fixture(%{first_name: "Bob", last_name: "Johnson", email: "bob@example.com", account_status: "suspended"})
+        user_fixture(%{
+          first_name: "Bob",
+          last_name: "Johnson",
+          email: "bob@example.com",
+          account_status: "suspended"
+        })
       ]
+
       %{admin_user: admin_user, users: users}
     end
 

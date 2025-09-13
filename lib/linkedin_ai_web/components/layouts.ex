@@ -101,6 +101,20 @@ defmodule LinkedinAiWeb.Layouts do
               >
                 Platform Analytics
               </.nav_item>
+              <.nav_item
+                href="/admin/subscriptions"
+                icon="hero-credit-card"
+                current={@current_path == "/admin/subscriptions"}
+              >
+                Subscriptions
+              </.nav_item>
+              <.nav_item
+                href="/admin/jobs"
+                icon="hero-cog-6-tooth"
+                current={@current_path == "/admin/jobs"}
+              >
+                Job Monitoring
+              </.nav_item>
             </ul>
           </li>
         <% end %>

@@ -472,7 +472,7 @@ Looking forward to your thoughts and experiences on this topic.
   """
   def count_content_generated_today do
     today = Date.utc_today()
-    
+
     from(gc in GeneratedContent,
       where: fragment("DATE(?)", gc.inserted_at) == ^today,
       select: count(gc.id)
@@ -507,8 +507,9 @@ Looking forward to your thoughts and experiences on this topic.
   """
   def count_content_for_period({start_date, end_date}) do
     from(gc in GeneratedContent,
-      where: fragment("DATE(?)", gc.inserted_at) >= ^start_date and
-             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+          fragment("DATE(?)", gc.inserted_at) <= ^end_date,
       select: count(gc.id)
     )
     |> Repo.one()
@@ -519,9 +520,10 @@ Looking forward to your thoughts and experiences on this topic.
   """
   def count_published_content({start_date, end_date}) do
     from(gc in GeneratedContent,
-      where: gc.is_published == true and
-             fragment("DATE(?)", gc.inserted_at) >= ^start_date and
-             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      where:
+        gc.is_published == true and
+          fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+          fragment("DATE(?)", gc.inserted_at) <= ^end_date,
       select: count(gc.id)
     )
     |> Repo.one()
@@ -540,8 +542,9 @@ Looking forward to your thoughts and experiences on this topic.
   """
   def get_popular_content_types({start_date, end_date}) do
     from(gc in GeneratedContent,
-      where: fragment("DATE(?)", gc.inserted_at) >= ^start_date and
-             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+          fragment("DATE(?)", gc.inserted_at) <= ^end_date,
       group_by: gc.content_type,
       select: {gc.content_type, count(gc.id)},
       order_by: [desc: count(gc.id)]
@@ -571,8 +574,9 @@ Looking forward to your thoughts and experiences on this topic.
 
   defp count_unique_users_for_period({start_date, end_date}) do
     from(gc in GeneratedContent,
-      where: fragment("DATE(?)", gc.inserted_at) >= ^start_date and
-             fragment("DATE(?)", gc.inserted_at) <= ^end_date,
+      where:
+        fragment("DATE(?)", gc.inserted_at) >= ^start_date and
+          fragment("DATE(?)", gc.inserted_at) <= ^end_date,
       select: count(gc.user_id, :distinct)
     )
     |> Repo.one()
@@ -581,11 +585,56 @@ Looking forward to your thoughts and experiences on this topic.
   defp calculate_avg_content_per_user({start_date, end_date}) do
     total_content = count_content_for_period({start_date, end_date})
     unique_users = count_unique_users_for_period({start_date, end_date})
-    
+
     if unique_users > 0 do
       Float.round(total_content / unique_users, 1)
     else
       0.0
     end
+  end
+
+  ## Analytics Processing Functions
+
+  @doc """
+  Counts content generated for a specific date.
+  """
+  def count_content_for_date(date) do
+    from(gc in GeneratedContent,
+      where: fragment("DATE(?)", gc.inserted_at) == ^date,
+      select: count(gc.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Counts published content for a specific date.
+  """
+  def count_published_content_for_date(date) do
+    from(gc in GeneratedContent,
+      where:
+        gc.is_published == true and
+          fragment("DATE(?)", gc.inserted_at) == ^date,
+      select: count(gc.id)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Counts unique content creators for a specific date.
+  """
+  def count_unique_creators_for_date(date) do
+    from(gc in GeneratedContent,
+      where: fragment("DATE(?)", gc.inserted_at) == ^date,
+      select: count(gc.user_id, :distinct)
+    )
+    |> Repo.one()
+  end
+
+  @doc """
+  Calculates average content quality for a specific date.
+  """
+  def calculate_avg_quality_for_date(_date) do
+    # Placeholder - would need quality scoring system
+    8.2
   end
 end

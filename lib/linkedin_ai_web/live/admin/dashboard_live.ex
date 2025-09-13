@@ -12,12 +12,12 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
     if connected?(socket) do
       # Subscribe to real-time updates
       Phoenix.PubSub.subscribe(LinkedinAi.PubSub, "admin_metrics")
-      
+
       # Schedule periodic updates
       :timer.send_interval(30_000, self(), :update_metrics)
     end
 
-    socket = 
+    socket =
       socket
       |> assign(:page_title, "Admin Dashboard")
       |> load_dashboard_data()
@@ -157,8 +157,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
               phx-click="refresh_metrics"
               class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" />
-              Refresh
+              <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" /> Refresh
             </button>
           </div>
         </div>
@@ -174,11 +173,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
               status={@system_health.database_status}
               icon="hero-circle-stack"
             />
-            <.health_indicator
-              name="Redis"
-              status={@system_health.redis_status}
-              icon="hero-bolt"
-            />
+            <.health_indicator name="Redis" status={@system_health.redis_status} icon="hero-bolt" />
             <.health_indicator
               name="OpenAI"
               status={@system_health.openai_status}
@@ -196,8 +191,8 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
             />
           </div>
         </div>
-
-        <!-- Key Metrics Grid -->
+        
+    <!-- Key Metrics Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <.metric_card
             title="Total Users"
@@ -232,8 +227,8 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
             color="purple"
           />
         </div>
-
-        <!-- Charts and Analytics -->
+        
+    <!-- Charts and Analytics -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <!-- User Growth Chart -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -259,8 +254,8 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
               />
             </div>
           </div>
-
-          <!-- Usage Statistics -->
+          
+    <!-- Usage Statistics -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Today's Usage</h3>
             <div class="space-y-4">
@@ -291,8 +286,8 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
             </div>
           </div>
         </div>
-
-        <!-- Recent Activity -->
+        
+    <!-- Recent Activity -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <!-- Recent Users -->
           <div class="bg-white rounded-lg shadow">
@@ -322,8 +317,8 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
               <% end %>
             </div>
           </div>
-
-          <!-- Quick Actions -->
+          
+    <!-- Quick Actions -->
           <div class="bg-white rounded-lg shadow">
             <div class="px-6 py-4 border-b border-gray-200">
               <h3 class="text-lg font-medium text-gray-900">Quick Actions</h3>
@@ -333,22 +328,19 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
                 navigate="/admin/users"
                 class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <.icon name="hero-users" class="w-4 h-4 mr-2" />
-                Manage Users
+                <.icon name="hero-users" class="w-4 h-4 mr-2" /> Manage Users
               </.link>
               <.link
                 navigate="/admin/subscriptions"
                 class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <.icon name="hero-credit-card" class="w-4 h-4 mr-2" />
-                View Subscriptions
+                <.icon name="hero-credit-card" class="w-4 h-4 mr-2" /> View Subscriptions
               </.link>
               <.link
                 navigate="/admin/analytics"
                 class="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
               >
-                <.icon name="hero-chart-pie" class="w-4 h-4 mr-2" />
-                Platform Analytics
+                <.icon name="hero-chart-pie" class="w-4 h-4 mr-2" /> Platform Analytics
               </.link>
             </div>
           </div>
@@ -428,11 +420,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLive do
         <span>{@value}%</span>
       </div>
       <div class="w-full bg-gray-200 rounded-full h-2">
-        <div
-          class={"h-2 rounded-full bg-#{@color}-600"}
-          style={"width: #{@value}%"}
-        >
-        </div>
+        <div class={"h-2 rounded-full bg-#{@color}-600"} style={"width: #{@value}%"}></div>
       </div>
     </div>
     """

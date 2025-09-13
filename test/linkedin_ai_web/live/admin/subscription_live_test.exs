@@ -10,7 +10,10 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
       %{admin_user: admin_user}
     end
 
-    test "renders subscription analytics page for admin users", %{conn: conn, admin_user: admin_user} do
+    test "renders subscription analytics page for admin users", %{
+      conn: conn,
+      admin_user: admin_user
+    } do
       {:ok, _index_live, html} =
         conn
         |> log_in_user(admin_user)
@@ -44,7 +47,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
         |> live(~p"/admin/subscriptions")
 
       html = render(index_live)
-      
+
       assert html =~ "Total Revenue"
       assert html =~ "Monthly Recurring Revenue"
       assert html =~ "Average Revenue Per User"
@@ -125,7 +128,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
         |> live(~p"/admin/subscriptions")
 
       html = render(index_live)
-      
+
       assert html =~ "Subscription Stats"
       assert html =~ "Total Subscriptions"
       assert html =~ "Active Subscriptions"
@@ -140,7 +143,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
         |> live(~p"/admin/subscriptions")
 
       html = render(index_live)
-      
+
       assert html =~ "Churn Analysis"
       assert html =~ "Overall Churn Rate"
       assert html =~ "Voluntary Churn"
@@ -155,7 +158,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
         |> live(~p"/admin/subscriptions")
 
       html = render(index_live)
-      
+
       assert html =~ "Growth Metrics"
       assert html =~ "Net Growth Rate"
       assert html =~ "Customer LTV"
@@ -170,7 +173,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
         |> live(~p"/admin/subscriptions")
 
       html = render(index_live)
-      
+
       assert html =~ "Plan Distribution"
     end
 
@@ -181,7 +184,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
         |> live(~p"/admin/subscriptions")
 
       html = render(index_live)
-      
+
       assert html =~ "Recent Subscriptions"
       assert html =~ "User"
       assert html =~ "Plan"
@@ -198,7 +201,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
 
       # Simulate automatic update
       send(index_live.pid, :update_metrics)
-      
+
       html = render(index_live)
       assert html =~ "Subscription Analytics"
     end
@@ -211,7 +214,7 @@ defmodule LinkedinAiWeb.Admin.SubscriptionLiveTest do
 
       # Simulate broadcast
       send(index_live.pid, {:subscription_updated, %{type: "new_subscription"}})
-      
+
       html = render(index_live)
       assert html =~ "Subscription Analytics"
     end

@@ -13,8 +13,20 @@ defmodule LinkedinAiWeb.Router do
     plug :fetch_current_user
   end
 
+  pipeline :rate_limited_user do
+    plug LinkedinAiWeb.Plugs.RateLimiter,
+      limit: 200,
+      window_seconds: 3600,
+      key_generator: &LinkedinAiWeb.Plugs.RateLimiter.user_key_generator/1
+  end
+
   pipeline :api do
     plug :accepts, ["json"]
+
+    plug LinkedinAiWeb.Plugs.RateLimiter,
+      limit: 1000,
+      window_seconds: 3600,
+      key_generator: &LinkedinAiWeb.Plugs.RateLimiter.api_key_generator/1
   end
 
   pipeline :webhook do
@@ -83,7 +95,7 @@ defmodule LinkedinAiWeb.Router do
   end
 
   scope "/", LinkedinAiWeb do
-    pipe_through [:browser, :require_authenticated_user]
+    pipe_through [:browser, :require_authenticated_user, :rate_limited_user]
 
     live_session :require_authenticated_user,
       on_mount: [{LinkedinAiWeb.UserAuth, :ensure_authenticated}] do
@@ -123,6 +135,7 @@ defmodule LinkedinAiWeb.Router do
       live "/users/:id", UserLive, :show
       live "/subscriptions", SubscriptionLive, :index
       live "/analytics", AnalyticsLive, :index
+      live "/jobs", JobsLive, :index
     end
   end
 end

@@ -58,8 +58,18 @@ if config_env() == :prod do
   config :linkedin_ai, LinkedinAi.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    socket_options: maybe_ipv6
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "20"),
+    queue_target: String.to_integer(System.get_env("DB_QUEUE_TARGET") || "5000"),
+    queue_interval: String.to_integer(System.get_env("DB_QUEUE_INTERVAL") || "5000"),
+    timeout: String.to_integer(System.get_env("DB_TIMEOUT") || "15000"),
+    ownership_timeout: String.to_integer(System.get_env("DB_OWNERSHIP_TIMEOUT") || "10000"),
+    socket_options: maybe_ipv6,
+    prepare: :named,
+    parameters: [
+      plan_cache_mode: "force_custom_plan",
+      statement_timeout: "30s",
+      idle_in_transaction_session_timeout: "60s"
+    ]
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

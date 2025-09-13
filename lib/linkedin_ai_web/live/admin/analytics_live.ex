@@ -13,7 +13,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
     if connected?(socket) do
       # Subscribe to real-time updates
       Phoenix.PubSub.subscribe(LinkedinAi.PubSub, "platform_analytics")
-      
+
       # Schedule periodic updates
       :timer.send_interval(120_000, self(), :update_analytics)
     end
@@ -68,7 +68,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
       "csv" ->
         csv_data = generate_analytics_csv(socket.assigns)
-        
+
         socket =
           socket
           |> put_flash(:info, "CSV report generated successfully")
@@ -103,7 +103,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_platform_overview(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       total_users: Accounts.count_users(),
       active_users: get_active_users_count(period),
@@ -116,7 +116,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_user_analytics_summary(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       new_registrations: Accounts.count_new_users_for_period(period),
       user_retention_rate: Analytics.calculate_retention_rate(),
@@ -128,7 +128,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_content_analytics_summary(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       content_generated: ContentGeneration.count_content_for_period(period),
       content_published: ContentGeneration.count_published_content(period),
@@ -140,7 +140,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_engagement_metrics(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       session_duration: Analytics.get_average_session_duration(),
       page_views: get_total_page_views(period),
@@ -152,7 +152,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_performance_metrics(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       api_response_time: Analytics.get_average_response_time(),
       error_rate: get_error_rate(period),
@@ -175,7 +175,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_feature_usage_stats(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       content_generation: ContentGeneration.get_usage_stats(period),
       profile_optimization: ProfileOptimization.get_usage_stats(period),
@@ -186,7 +186,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_growth_trends(date_range) do
     period = parse_date_range(date_range)
-    
+
     %{
       user_growth: Analytics.calculate_user_growth_rate(),
       revenue_growth: get_revenue_growth_rate(period),
@@ -204,8 +204,10 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
 
   defp get_active_users_count({_start_date, _end_date}) do
     from(u in LinkedinAi.Accounts.User,
-      where: fragment("DATE(?)", u.last_login_at) >= fragment("DATE(?)", ^Date.add(Date.utc_today(), -30)) and
-             fragment("DATE(?)", u.last_login_at) <= fragment("DATE(?)", ^Date.utc_today()),
+      where:
+        fragment("DATE(?)", u.last_login_at) >=
+          fragment("DATE(?)", ^Date.add(Date.utc_today(), -30)) and
+          fragment("DATE(?)", u.last_login_at) <= fragment("DATE(?)", ^Date.utc_today()),
       select: count(u.id)
     )
     |> Repo.one()
@@ -214,31 +216,50 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
   defp get_platform_uptime, do: 99.8
   defp get_daily_active_users(_period), do: 450
   defp calculate_user_engagement_score, do: 7.8
-  defp get_top_user_segments, do: ["Content Creators", "LinkedIn Professionals", "Marketing Teams"]
+
+  defp get_top_user_segments,
+    do: ["Content Creators", "LinkedIn Professionals", "Marketing Teams"]
+
   defp get_total_page_views(_period), do: 125_000
   defp get_bounce_rate(_period), do: 23.5
-  defp get_feature_adoption_rates, do: %{content_gen: 78.5, profile_opt: 65.2, linkedin_sync: 45.8}
+
+  defp get_feature_adoption_rates,
+    do: %{content_gen: 78.5, profile_opt: 65.2, linkedin_sync: 45.8}
+
   defp get_user_satisfaction_score, do: 4.2
   defp get_error_rate(_period), do: 0.8
   defp get_system_load_average, do: 2.1
   defp get_database_performance, do: %{avg_query_time: 45, slow_queries: 12}
   defp get_cache_hit_rate, do: 94.2
   defp get_linkedin_usage_stats(_period), do: %{connections: 1250, posts: 890, analyses: 670}
-  defp get_subscription_usage_stats(_period), do: %{upgrades: 45, downgrades: 12, cancellations: 23}
+
+  defp get_subscription_usage_stats(_period),
+    do: %{upgrades: 45, downgrades: 12, cancellations: 23}
+
   defp get_revenue_growth_rate(_period), do: 15.8
   defp get_engagement_growth_rate(_period), do: 12.3
   defp get_feature_adoption_growth(_period), do: 8.7
 
   defp generate_analytics_csv(assigns) do
     headers = ["Metric", "Value", "Period", "Change"]
-    
+
     rows = [
       ["Total Users", "#{assigns.platform_overview.total_users}", assigns.date_range, "+12%"],
       ["Active Users", "#{assigns.platform_overview.active_users}", assigns.date_range, "+8%"],
-      ["Content Generated", "#{assigns.platform_overview.total_content}", assigns.date_range, "+25%"],
-      ["Profile Analyses", "#{assigns.platform_overview.total_analyses}", assigns.date_range, "+18%"]
+      [
+        "Content Generated",
+        "#{assigns.platform_overview.total_content}",
+        assigns.date_range,
+        "+25%"
+      ],
+      [
+        "Profile Analyses",
+        "#{assigns.platform_overview.total_analyses}",
+        assigns.date_range,
+        "+18%"
+      ]
     ]
-    
+
     ([headers] ++ rows)
     |> Enum.map(&Enum.join(&1, ","))
     |> Enum.join("\n")
@@ -263,8 +284,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
                 phx-click="refresh_analytics"
                 class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" />
-                Refresh
+                <.icon name="hero-arrow-path" class="w-4 h-4 mr-2" /> Refresh
               </button>
               <select
                 phx-change="filter_date_range"
@@ -281,8 +301,7 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
                 phx-value-format="csv"
                 class="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
-                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" />
-                Export
+                <.icon name="hero-arrow-down-tray" class="w-4 h-4 mr-2" /> Export
               </button>
             </div>
           </div>
@@ -321,8 +340,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
             change="+0.2%"
           />
         </div>
-
-        <!-- Analytics Grid -->
+        
+    <!-- Analytics Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <!-- User Analytics -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -354,8 +373,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
               </div>
             </div>
           </div>
-
-          <!-- Content Analytics -->
+          
+    <!-- Content Analytics -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Content Analytics</h3>
             <div class="space-y-4">
@@ -386,8 +405,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
             </div>
           </div>
         </div>
-
-        <!-- Performance & Geographic -->
+        
+    <!-- Performance & Geographic -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <!-- Performance Metrics -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -411,8 +430,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
               </div>
             </div>
           </div>
-
-          <!-- Geographic Distribution -->
+          
+    <!-- Geographic Distribution -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Geographic Distribution</h3>
             <div class="space-y-3">
@@ -422,10 +441,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
                   <div class="flex items-center space-x-2">
                     <span class="text-sm text-gray-500">{data.users}</span>
                     <div class="w-16 bg-gray-200 rounded-full h-2">
-                      <div
-                        class="h-2 bg-blue-600 rounded-full"
-                        style={"width: #{data.percentage}%"}
-                      ></div>
+                      <div class="h-2 bg-blue-600 rounded-full" style={"width: #{data.percentage}%"}>
+                      </div>
                     </div>
                     <span class="text-xs text-gray-400 w-8">{data.percentage}%</span>
                   </div>
@@ -434,8 +451,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
             </div>
           </div>
         </div>
-
-        <!-- Feature Usage & Growth Trends -->
+        
+    <!-- Feature Usage & Growth Trends -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           <!-- Feature Usage -->
           <div class="bg-white rounded-lg shadow p-6">
@@ -470,8 +487,8 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
               </div>
             </div>
           </div>
-
-          <!-- Growth Trends -->
+          
+    <!-- Growth Trends -->
           <div class="bg-white rounded-lg shadow p-6">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Growth Trends</h3>
             <div class="space-y-4">
@@ -479,44 +496,56 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
                 <span class="text-sm text-gray-500">User Growth</span>
                 <div class="flex items-center">
                   <.icon name="hero-arrow-trending-up" class="w-4 h-4 text-green-500 mr-1" />
-                  <span class="text-sm font-medium text-green-600">{@growth_trends.user_growth}%</span>
+                  <span class="text-sm font-medium text-green-600">
+                    {@growth_trends.user_growth}%
+                  </span>
                 </div>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-500">Revenue Growth</span>
                 <div class="flex items-center">
                   <.icon name="hero-arrow-trending-up" class="w-4 h-4 text-green-500 mr-1" />
-                  <span class="text-sm font-medium text-green-600">{@growth_trends.revenue_growth}%</span>
+                  <span class="text-sm font-medium text-green-600">
+                    {@growth_trends.revenue_growth}%
+                  </span>
                 </div>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-500">Engagement Growth</span>
                 <div class="flex items-center">
                   <.icon name="hero-arrow-trending-up" class="w-4 h-4 text-green-500 mr-1" />
-                  <span class="text-sm font-medium text-green-600">{@growth_trends.engagement_growth}%</span>
+                  <span class="text-sm font-medium text-green-600">
+                    {@growth_trends.engagement_growth}%
+                  </span>
                 </div>
               </div>
               <div class="flex justify-between items-center">
                 <span class="text-sm text-gray-500">Feature Adoption</span>
                 <div class="flex items-center">
                   <.icon name="hero-arrow-trending-up" class="w-4 h-4 text-green-500 mr-1" />
-                  <span class="text-sm font-medium text-green-600">{@growth_trends.feature_adoption_growth}%</span>
+                  <span class="text-sm font-medium text-green-600">
+                    {@growth_trends.feature_adoption_growth}%
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- Engagement Metrics -->
+        
+    <!-- Engagement Metrics -->
         <div class="bg-white rounded-lg shadow p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Engagement Metrics</h3>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <div class="text-center">
-              <div class="text-2xl font-bold text-blue-600">{@engagement_metrics.session_duration}</div>
+              <div class="text-2xl font-bold text-blue-600">
+                {@engagement_metrics.session_duration}
+              </div>
               <div class="text-sm text-gray-500">Avg Session (min)</div>
             </div>
             <div class="text-center">
-              <div class="text-2xl font-bold text-green-600">{format_number(@engagement_metrics.page_views)}</div>
+              <div class="text-2xl font-bold text-green-600">
+                {format_number(@engagement_metrics.page_views)}
+              </div>
               <div class="text-sm text-gray-500">Page Views</div>
             </div>
             <div class="text-center">
@@ -524,7 +553,9 @@ defmodule LinkedinAiWeb.Admin.AnalyticsLive do
               <div class="text-sm text-gray-500">Bounce Rate</div>
             </div>
             <div class="text-center">
-              <div class="text-2xl font-bold text-orange-600">{@engagement_metrics.user_satisfaction}</div>
+              <div class="text-2xl font-bold text-orange-600">
+                {@engagement_metrics.user_satisfaction}
+              </div>
               <div class="text-sm text-gray-500">Satisfaction Score</div>
             </div>
             <div class="text-center">

@@ -44,7 +44,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
         |> live(~p"/admin")
 
       html = render(index_live)
-      
+
       assert html =~ "Database"
       assert html =~ "OpenAI"
       assert html =~ "Stripe"
@@ -58,7 +58,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
         |> live(~p"/admin")
 
       html = render(index_live)
-      
+
       assert html =~ "Total Users"
       assert html =~ "Active Today"
       assert html =~ "Monthly Revenue"
@@ -83,7 +83,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
         |> live(~p"/admin")
 
       html = render(index_live)
-      
+
       assert html =~ "Manage Users"
       assert html =~ "View Subscriptions"
       assert html =~ "Platform Analytics"
@@ -97,7 +97,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
 
       # Simulate automatic update
       send(index_live.pid, :update_metrics)
-      
+
       html = render(index_live)
       assert html =~ "Admin Dashboard"
     end
@@ -110,7 +110,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
 
       # Simulate broadcast
       send(index_live.pid, {:metric_updated, %{type: "user_count"}})
-      
+
       html = render(index_live)
       assert html =~ "Admin Dashboard"
     end
@@ -129,7 +129,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
         |> live(~p"/admin")
 
       html = render(index_live)
-      
+
       # Should show healthy indicators (mocked as healthy in tests)
       assert html =~ "Healthy"
     end
@@ -141,7 +141,7 @@ defmodule LinkedinAiWeb.Admin.DashboardLiveTest do
         |> live(~p"/admin")
 
       html = render(index_live)
-      
+
       # Should display metric values
       assert html =~ "vs last month"
     end
